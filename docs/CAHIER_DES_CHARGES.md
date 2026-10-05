@@ -1,4 +1,4 @@
-# TSENA — Cahier des charges (version 1.1, validée le 05/10/2026)
+# TSENA — Cahier des charges (version 1.2, validée le 05/10/2026)
 
 > Logiciel de gestion commerciale et de comptabilité : achats (Chine), stock, ventes en ligne et en boutique, livraisons, trésorerie, rapports.
 > Fonctionne **en ligne et hors ligne** (coupure de connexion ou de courant), sur **téléphone et ordinateur** (iOS, Android, Windows, macOS).
@@ -26,10 +26,10 @@
 | **Super-admin** (technique) | Compte de secours | Réinitialiser les mots de passe de tous, forcer une synchronisation, réparer, restaurer une sauvegarde, remettre le logiciel à l'état d'origine | — (mais ne sert pas au travail quotidien) |
 | **Admin / Gérant** | Vous | Tout le métier : achats, stock, prix, utilisateurs et droits, dépenses, clôture, rapports complets, bénéfices | Remise à zéro totale (réservée au super-admin) |
 | **Propriétaire / Observateur** *(ajout)* | Votre boss | Voir les tableaux de bord et le récapitulatif journalier, en lecture seule | Rien modifier |
-| **Vendeur / Opérateur** | Personnes qui répondent sur Facebook et en boutique | Créer clients et commandes, vendre en boutique, préparer les commandes, encaisser, enregistrer retours et échanges | Voir les prix d'achat et les bénéfices, modifier le stock à la main, gérer les utilisateurs |
-| **Livreur** | Livreurs | Voir **ses** livraisons, marquer livré / retourné / choix rendus, enregistrer l'argent reçu, voir **son** compte (frais gagnés, argent à rendre) | Voir les autres livreurs, les prix d'achat, le reste du stock |
+| **Vendeur / Opérateur** | Personnes qui répondent sur Facebook et en boutique | Créer clients et commandes, vendre en boutique, préparer les commandes, encaisser, enregistrer retours et échanges. **Gérer les livraisons à la place des livreurs** : assigner les commandes, marquer livré / refusé / choix rendus, enregistrer l'argent rapporté, consulter le compte de chaque livreur (frais gagnés, argent à rendre) | Voir les prix d'achat et les bénéfices, modifier le stock à la main, gérer les utilisateurs |
 | **Magasinier** *(ajout, optionnel)* | Personne qui réceptionne la marchandise | Réceptionner les arrivages, faire les inventaires | Vendre, voir la trésorerie |
 
+- **Les livreurs n'utilisent pas l'application.** Ce ne sont pas des utilisateurs mais des **fiches livreurs** (nom, téléphone, axes desservis, actif/inactif) créées par l'admin. Toutes leurs opérations sont saisies par les vendeurs, et chaque saisie garde le nom du vendeur qui l'a faite.
 - Seul l'**Admin** crée les comptes et attribue les rôles. Un utilisateur ne peut rien faire avant d'avoir été créé par l'admin.
 - Les droits sont présentés sous forme de **matrice cochable** (rôle × fonction) : l'admin peut ajuster un rôle ou créer un rôle personnalisé.
 - Chaque utilisateur ne voit **que les menus de son rôle**.
@@ -114,7 +114,7 @@ Brouillon → Confirmée → En préparation → Prête → Assignée au livreur
 ### 7.2 Livraisons
 - **Zones / axes de livraison** paramétrables, chacun avec un **tarif par défaut** ; le montant peut être modifié à la main.
 - Regroupement des commandes par axe, **feuille de route** pour chaque livreur (imprimable).
-- Au retour, le livreur (ou le vendeur) indique pour chaque commande : livrée, refusée, articles pris parmi les choix, articles rendus, montant encaissé et par quel moyen.
+- Au retour du livreur, **le vendeur** enregistre pour chaque commande : livrée, refusée, articles pris parmi les choix, articles rendus, montant encaissé et par quel moyen.
 
 ### 7.3 Retours, refus et échanges
 - **Refus à la livraison** : la marchandise revient en stock, la commande est annulée (motif obligatoire : taille, couleur, qualité, client absent…).
@@ -192,7 +192,7 @@ Un résumé court, envoyé en un clic (WhatsApp, Messenger, SMS, e-mail ou PDF) 
 ### 11.1 Un tableau de bord par rôle
 - **Admin / Propriétaire** : chiffre d'affaires, **bénéfice et perte** (par heure, jour, semaine, mois, année), marge, dépenses, trésorerie par compte, valeur du stock, arrivages en attente, argent chez les livreurs, meilleurs articles, articles dormants, taux de retour.
 - **Vendeur** : ses ventes, ses commandes à préparer, commandes en attente, objectifs.
-- **Livreur** : ses livraisons du jour, argent à rendre, frais gagnés.
+- **Suivi des livreurs** (dans l'espace du vendeur et de l'admin) : par livreur, les livraisons du jour, ce qui est encore dehors (articles et argent), les frais gagnés, l'argent à rendre.
 
 ### 11.2 Filtres partout
 - Période : aujourd'hui, hier, cette semaine, ce mois, cette année, **intervalle libre**.

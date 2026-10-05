@@ -153,7 +153,7 @@ function UserForm({ user, me, roles, users, onClose, onCreated }: { user: User |
       footer={<><Button variant="ghost" onClick={onClose}>Annuler</Button><Button busy={busy} onClick={submit}>{user ? 'Enregistrer' : 'Créer le compte'}</Button></>}>
       <div className="stack">
         <TextField label="Nom complet" value={fullName} onChange={setFullName} autoFocus />
-        <TextField label="Nom d'utilisateur (identifiant)" value={username} onChange={setUsername} autoCapitalize="none" disabled={isSuper} hint="Sert à se connecter. Exemple : hery, livreur.tiana" />
+        <TextField label="Nom d'utilisateur (identifiant)" value={username} onChange={setUsername} autoCapitalize="none" disabled={isSuper} hint="Sert à se connecter. Exemple : hery, vendeuse.tiana" />
         <SelectField label="Rôle" value={roleId} onChange={setRoleId} options={roleOptions} hint={roles.find((r) => r.id === roleId)?.description} />
         <TextField label="Téléphone" value={phone} onChange={setPhone} type="tel" inputMode="tel" />
         <TextField label="E-mail (facultatif)" value={email} onChange={setEmail} type="email" autoCapitalize="none" />

@@ -24,7 +24,7 @@ export function DashboardPage() {
   const steps = [
     { done: company.name !== DEFAULT_COMPANY.name || !!company.logo, title: 'Personnaliser la société', text: 'Nom, logo, couleur, téléphone pour les tickets.', href: '#/parametres/societe', perm: 'settings.company' },
     { done: !!cloud, title: 'Relier cet appareil au cloud', text: 'Pour partager les données entre tous les appareils et les mettre à l’abri.', href: '#/parametres/cloud', perm: 'backup.manage' },
-    { done: team.length > 0, title: "Créer les comptes de l'équipe", text: 'Vendeurs, livreurs, propriétaire : chacun avec son rôle.', href: '#/utilisateurs', perm: 'users.manage' },
+    { done: team.length > 0, title: "Créer les comptes de l'équipe", text: 'Vendeurs, propriétaire, magasinier : chacun avec son rôle.', href: '#/utilisateurs', perm: 'users.manage' },
     { done: !!lastBackup, title: 'Faire une première sauvegarde', text: 'Un fichier à garder en lieu sûr.', href: '#/parametres/sauvegarde', perm: 'backup.manage' },
   ].filter((s) => can(s.perm));
   const doneCount = steps.filter((s) => s.done).length;
