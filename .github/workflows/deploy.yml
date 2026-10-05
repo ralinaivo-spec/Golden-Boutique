@@ -1,7 +1,8 @@
 # Construit TSENA et le met en ligne sur GitHub Pages à chaque modification de la branche main.
 name: Mise en ligne
-# Lancement manuel tant que l'hébergement n'est pas choisi (GitHub Pages exige un dépôt public ou un compte payant).
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read

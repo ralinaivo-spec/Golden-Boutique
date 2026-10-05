@@ -1,4 +1,4 @@
-# TSENA — Cahier des charges (version 1.2, validée le 05/10/2026)
+# TSENA — Cahier des charges (version 1.3, validée le 05/10/2026)
 
 > Logiciel de gestion commerciale et de comptabilité : achats (Chine), stock, ventes en ligne et en boutique, livraisons, trésorerie, rapports.
 > Fonctionne **en ligne et hors ligne** (coupure de connexion ou de courant), sur **téléphone et ordinateur** (iOS, Android, Windows, macOS).
@@ -37,7 +37,7 @@
 ### 2.2 Connexion et sécurité
 
 - Nom d'utilisateur + mot de passe.
-- Compte super-admin par défaut : `super-adm` / `anosy` — **changement obligatoire du mot de passe à la première connexion** (sinon n'importe qui ayant lu ce document pourrait entrer).
+- Compte super-admin par défaut : `super-adm`, avec le mot de passe d'origine communiqué au gérant — **changement obligatoire du mot de passe à la première connexion** (sinon n'importe qui ayant lu ce document pourrait entrer).
 - À la première connexion de chaque utilisateur : choix d'une **question secrète** parmi des suggestions proposées automatiquement par le logiciel, + adresse e-mail facultative.
 - Mot de passe oublié : par **e-mail** (lien de réinitialisation), par **question secrète**, ou par l'**admin / super-admin**.
 - Code PIN rapide (4–6 chiffres) optionnel pour déverrouiller l'appli sur son propre téléphone.
@@ -152,7 +152,7 @@ Brouillon → Confirmée → En préparation → Prête → Assignée au livreur
   - **+** argent client encaissé par le livreur (à rendre),
   - **−** argent remis à la boutique,
   - **−** frais que la boutique lui a reversés (cas où le client a payé article + frais par mobile money à la boutique).
-- **Règlement livreur** : à chaque remise d'argent, le logiciel affiche ce que le livreur doit rendre ou ce qu'on lui doit, et garde l'historique complet de chaque transfert.
+- **Règlement livreur** (fait **uniquement par l'admin**) : à chaque remise d'argent, le logiciel affiche ce que le livreur doit rendre ou ce qu'on lui doit, et garde l'historique complet de chaque transfert.
 
 ### 9.4 Dépenses et autres revenus (pour tout type d'activité)
 - **Catégories de dépenses** paramétrables : loyer, salaires, électricité, eau, Internet/crédit, carburant, publicité Facebook, emballage, entretien, impôts, etc. (ajout illimité).
