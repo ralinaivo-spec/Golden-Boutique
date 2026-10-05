@@ -1,0 +1,165 @@
+// Comptes, connexion, mots de passe, questions secrètes et journal d'activité.
+import { all, applyRemote, get, getMeta, save, setMeta, useMeta, useTable, type BaseRecord } from './db';
+import { hashSecret, normalizeAnswer, verifySecret } from './crypto';
+import { DEFAULT_ROLES, PERMISSIONS, SUPERADMIN_ROLE } from './permissions';
+
+export interface User extends BaseRecord {
+  username: string;
+  fullName: string;
+  roleId: string;
+  phone?: string;
+  email?: string;
+  active: boolean;
+  passwordHash: string;
+  mustChangePassword?: boolean;
+  secretQuestion?: string;
+  secretAnswerHash?: string;
+}
+export interface Role extends BaseRecord {
+  name: string;
+  description?: string;
+  permissions: string[];
+  permsCatalog?: string[];
+  locked?: boolean;
+  system?: boolean;
+}
+
+export const SUPERADMIN_ID = 'user-superadmin';
+const SEED_TIME = '2000-01-01T00:00:00.000Z';
+
+export const SECRET_QUESTIONS = [
+  'Quel est le nom de votre premier instituteur ou institutrice ?',
+  'Dans quel quartier avez-vous grandi ?',
+  'Quel est le prénom de votre grand-mère maternelle ?',
+  'Quel était le nom de votre école primaire ?',
+  'Quel est votre plat malgache préféré ?',
+  'Quel est le surnom que vous donnait votre famille ?',
+  'Dans quelle ville est né votre père ?',
+  'Quel était le nom de votre premier animal de compagnie ?',
+  'Quel est le prénom de votre meilleur ami d’enfance ?',
+  'Quelle était la marque de votre premier téléphone ?',
+];
+
+/** Crée le super-admin et les rôles de départ s'ils n'existent pas encore sur cet appareil. */
+export async function seedAccounts() {
+  const roles = DEFAULT_ROLES.map((r) => ({
+    tbl: 'roles', id: r.id,
+    data: { ...r, permsCatalog: PERMISSIONS.map((p) => p.key), createdAt: SEED_TIME, updatedAt: SEED_TIME } as BaseRecord,
+  }));
+  const superAdmin = {
+    tbl: 'users', id: SUPERADMIN_ID,
+    data: {
+      id: SUPERADMIN_ID, username: 'super-adm', fullName: 'Super-admin', roleId: SUPERADMIN_ROLE, active: true,
+      passwordHash: await hashSecret('anosy'), mustChangePassword: true, createdAt: SEED_TIME, updatedAt: SEED_TIME,
+    } as BaseRecord,
+  };
+  await applyRemote([...roles, superAdmin]);
+
+  // Nouveaux droits ajoutés par une mise à jour : on les donne aux rôles de départ qui doivent les avoir.
+  const keys = PERMISSIONS.map((p) => p.key);
+  const updates: Partial<Role>[] = [];
+  for (const role of all<Role>('roles')) {
+    const known = new Set(role.permsCatalog ?? keys);
+    const fresh = keys.filter((k) => !known.has(k));
+    if (!fresh.length && role.permsCatalog) continue;
+    const def = DEFAULT_ROLES.find((d) => d.id === role.id);
+    const add = fresh.filter((k) => role.locked || def?.permissions.includes(k));
+    updates.push({ id: role.id, permissions: [...new Set([...role.permissions, ...add])], permsCatalog: keys });
+  }
+  if (updates.length) await save('roles', updates);
+}
+
+// ---- Session ----
+interface Session { userId: string; at: string }
+
+export function currentUser(): User | undefined {
+  const s = getMeta<Session | null>('session', null);
+  return s ? get<User>('users', s.userId) : undefined;
+}
+export function useCurrentUser(): User | undefined {
+  const s = useMeta<Session | null>('session', null);
+  useTable('users');
+  const u = s ? get<User>('users', s.userId) : undefined;
+  return u && u.active ? u : undefined;
+}
+export function roleOf(user?: User): Role | undefined {
+  return user ? get<Role>('roles', user.roleId) : undefined;
+}
+export function can(user: User | undefined, perm: string): boolean {
+  if (!user) return false;
+  if (user.roleId === SUPERADMIN_ROLE) return true;
+  return !!roleOf(user)?.permissions.includes(perm);
+}
+export function useCan() {
+  const user = useCurrentUser();
+  useTable('roles');
+  return (perm: string) => can(user, perm);
+}
+
+export const normUsername = (s: string) => s.trim().toLowerCase();
+export function findUser(username: string): User | undefined {
+  const n = normUsername(username);
+  return all<User>('users').find((u) => u.username === n);
+}
+
+const LOCK_AFTER = 5;
+const LOCK_MINUTES = 5;
+
+export async function login(username: string, password: string): Promise<User> {
+  const user = findUser(username);
+  const fails = getMeta<Record<string, { n: number; until?: number }>>('loginFails', {});
+  const f = fails[normUsername(username)];
+  if (f?.until && f.until > Date.now()) {
+    const min = Math.ceil((f.until - Date.now()) / 60000);
+    throw new Error(`Trop d'essais. Réessayez dans ${min} min, ou demandez à l'admin.`);
+  }
+  if (!user || !(await verifySecret(password, user.passwordHash))) {
+    const n = (f?.n ?? 0) + 1;
+    await setMeta('loginFails', { ...fails, [normUsername(username)]: { n, until: n >= LOCK_AFTER ? Date.now() + LOCK_MINUTES * 60000 : undefined } });
+    throw new Error("Nom d'utilisateur ou mot de passe incorrect.");
+  }
+  if (!user.active) throw new Error("Ce compte est désactivé. Contactez l'admin.");
+  await setMeta('loginFails', { ...fails, [user.username]: { n: 0 } });
+  await setMeta('session', { userId: user.id, at: new Date().toISOString() });
+  await setMeta('lastActivity', Date.now());
+  await audit('Connexion', `${user.fullName} s'est connecté(e)`);
+  if (location.hash && location.hash !== '#/') location.hash = '/';
+  return user;
+}
+
+export async function logout() {
+  const u = currentUser();
+  if (u) await audit('Déconnexion', `${u.fullName} s'est déconnecté(e)`);
+  await setMeta('session', null);
+  location.hash = '/';
+}
+
+export function checkPasswordStrength(pwd: string): string | null {
+  if (pwd.length < 6) return 'Au moins 6 caractères.';
+  if (!/[0-9]/.test(pwd) || !/[a-zA-Z]/.test(pwd)) return 'Mélangez lettres et chiffres.';
+  if (['anosy', '123456', 'azerty', 'password', 'motdepasse'].includes(pwd.toLowerCase())) return 'Ce mot de passe est trop connu.';
+  return null;
+}
+
+export async function setPassword(userId: string, pwd: string, opts: { mustChange?: boolean; reason: string }) {
+  await save('users', { id: userId, passwordHash: await hashSecret(pwd), mustChangePassword: !!opts.mustChange });
+  const u = get<User>('users', userId);
+  await audit('Mot de passe', `${opts.reason} — ${u?.fullName ?? userId}`, 'users', userId);
+}
+
+export async function setSecretQuestion(userId: string, question: string, answer: string) {
+  await save('users', { id: userId, secretQuestion: question, secretAnswerHash: await hashSecret(normalizeAnswer(answer)) });
+}
+
+export async function checkSecretAnswer(user: User, answer: string) {
+  return verifySecret(normalizeAnswer(answer), user.secretAnswerHash);
+}
+
+// ---- Journal d'activité ----
+export async function audit(action: string, details: string, entity?: string, entityId?: string) {
+  const u = currentUser();
+  await save('audit', {
+    at: new Date().toISOString(), action, details, entity, entityId,
+    userId: u?.id ?? null, userName: u?.fullName ?? '—', device: getMeta('deviceName', ''),
+  });
+}

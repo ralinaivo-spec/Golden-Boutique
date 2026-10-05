@@ -1,0 +1,47 @@
+// Droits d'accès : chaque rôle est une liste de droits. L'admin peut ajuster la matrice.
+
+export interface PermissionDef { key: string; label: string; group: string }
+
+export const PERMISSIONS: PermissionDef[] = [
+  { group: 'Général', key: 'dashboard.view', label: 'Voir le tableau de bord' },
+  { group: 'Général', key: 'costs.view', label: "Voir les prix d'achat, marges et bénéfices" },
+  { group: 'Articles et stock', key: 'catalog.view', label: 'Consulter les articles et le stock' },
+  { group: 'Articles et stock', key: 'catalog.edit', label: 'Créer et modifier les articles, catégories et prix' },
+  { group: 'Articles et stock', key: 'stock.adjust', label: 'Ajuster le stock et faire les inventaires' },
+  { group: 'Achats', key: 'purchases.manage', label: 'Gérer les achats en Chine et les arrivages' },
+  { group: 'Achats', key: 'purchases.receive', label: 'Réceptionner la marchandise' },
+  { group: 'Ventes', key: 'orders.create', label: 'Créer les commandes clients' },
+  { group: 'Ventes', key: 'orders.prepare', label: 'Préparer les commandes' },
+  { group: 'Ventes', key: 'orders.dispatch', label: 'Assigner les livraisons aux livreurs' },
+  { group: 'Ventes', key: 'pos.sell', label: 'Vendre en boutique (caisse)' },
+  { group: 'Ventes', key: 'returns.manage', label: 'Enregistrer retours et échanges' },
+  { group: 'Livraison', key: 'deliveries.own', label: 'Voir et mettre à jour ses propres livraisons' },
+  { group: 'Argent', key: 'treasury.view', label: 'Voir la trésorerie et les soldes' },
+  { group: 'Argent', key: 'expenses.manage', label: 'Saisir les dépenses et autres revenus' },
+  { group: 'Argent', key: 'couriers.settle', label: 'Faire les règlements des livreurs' },
+  { group: 'Argent', key: 'closing.do', label: 'Faire la clôture de journée' },
+  { group: 'Rapports', key: 'reports.view', label: 'Voir les rapports complets' },
+  { group: 'Administration', key: 'users.manage', label: 'Créer les utilisateurs et donner les accès' },
+  { group: 'Administration', key: 'settings.company', label: 'Modifier la société (nom, logo, couleur)' },
+  { group: 'Administration', key: 'audit.view', label: "Consulter le journal d'activité" },
+  { group: 'Administration', key: 'backup.manage', label: 'Faire et télécharger des sauvegardes' },
+  { group: 'Administration', key: 'system.admin', label: 'Restaurer, réinitialiser, réparer (super-admin)' },
+];
+
+const ALL = PERMISSIONS.map((p) => p.key);
+const not = (...ex: string[]) => ALL.filter((k) => !ex.includes(k));
+
+export interface RoleSeed { id: string; name: string; description: string; permissions: string[]; locked?: boolean; system?: boolean }
+
+/** Rôles de départ (identifiants fixes pour être identiques sur tous les appareils). */
+export const DEFAULT_ROLES: RoleSeed[] = [
+  { id: 'role-superadmin', name: 'Super-admin', description: 'Compte technique de secours : mots de passe, restauration, réinitialisation.', permissions: ALL, locked: true, system: true },
+  { id: 'role-admin', name: 'Admin / Gérant', description: "Gère toute l'activité, les utilisateurs et leurs accès.", permissions: not('system.admin'), system: true },
+  { id: 'role-owner', name: 'Propriétaire', description: 'Consulte les tableaux de bord et les rapports, sans rien modifier.', permissions: ['dashboard.view', 'costs.view', 'catalog.view', 'treasury.view', 'reports.view', 'audit.view'], system: true },
+  { id: 'role-seller', name: 'Vendeur', description: 'Répond aux clients, crée les commandes, prépare et vend en boutique.', permissions: ['dashboard.view', 'catalog.view', 'orders.create', 'orders.prepare', 'orders.dispatch', 'pos.sell', 'returns.manage'], system: true },
+  { id: 'role-courier', name: 'Livreur', description: 'Voit ses livraisons, enregistre l’argent reçu et les retours.', permissions: ['dashboard.view', 'deliveries.own'], system: true },
+  { id: 'role-stock', name: 'Magasinier', description: 'Réceptionne la marchandise et fait les inventaires.', permissions: ['dashboard.view', 'catalog.view', 'purchases.receive', 'stock.adjust'], system: true },
+];
+
+export const SUPERADMIN_ROLE = 'role-superadmin';
+export const ADMIN_ROLE = 'role-admin';

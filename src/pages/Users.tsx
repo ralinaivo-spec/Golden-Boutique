@@ -1,0 +1,167 @@
+// Gestion des utilisateurs : seul l'admin crée les comptes et attribue les rôles.
+import { useMemo, useState } from 'react';
+import { audit, normUsername, roleOf, setPassword, SUPERADMIN_ID, useCurrentUser, type Role, type User } from '../lib/auth';
+import { hashSecret } from '../lib/crypto';
+import { save, useTable } from '../lib/db';
+import { SUPERADMIN_ROLE } from '../lib/permissions';
+import { Badge, Button, Confirm, Empty, IconButton, Modal, PageHead, SelectField, TextField, Toggle, timeAgo, toast } from '../ui/kit';
+import { Icon } from '../ui/icons';
+
+/** Mot de passe provisoire facile à dicter : 3 lettres + 4 chiffres. */
+function tempPassword() {
+  const letters = 'abcdefghjkmnpqrstuvwxyz';
+  const r = crypto.getRandomValues(new Uint32Array(7));
+  return [...r.slice(0, 3)].map((n) => letters[n % letters.length]).join('') + [...r.slice(3)].map((n) => n % 10).join('');
+}
+
+export function UsersPage() {
+  const me = useCurrentUser()!;
+  const users = useTable<User>('users');
+  const roles = useTable<Role>('roles');
+  const [q, setQ] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [editing, setEditing] = useState<User | 'new' | null>(null);
+  const [resetFor, setResetFor] = useState<User | null>(null);
+  const [shownPwd, setShownPwd] = useState<{ user: User; pwd: string } | null>(null);
+
+  const list = useMemo(() => {
+    const n = q.trim().toLowerCase();
+    return users
+      .filter((u) => !roleFilter || u.roleId === roleFilter)
+      .filter((u) => !n || u.fullName.toLowerCase().includes(n) || u.username.includes(n) || (u.phone || '').includes(n))
+      .sort((a, b) => Number(b.active) - Number(a.active) || a.fullName.localeCompare(b.fullName));
+  }, [users, q, roleFilter]);
+
+  const canTouch = (u: User) => u.roleId !== SUPERADMIN_ROLE || me.roleId === SUPERADMIN_ROLE;
+
+  return (
+    <>
+      <PageHead title="Utilisateurs" subtitle={`${users.filter((u) => u.active).length} comptes actifs`}
+        actions={<Button icon="plus" onClick={() => setEditing('new')}>Ajouter un utilisateur</Button>} />
+      <div className="row">
+        <div className="field" style={{ flex: '1 1 220px' }}>
+          <label htmlFor="user-search" className="sr-only">Rechercher</label>
+          <input id="user-search" placeholder="Rechercher un nom, un identifiant, un téléphone" value={q} onChange={(e) => setQ(e.target.value)} />
+        </div>
+        <div className="field" style={{ flex: '0 1 220px' }}>
+          <select aria-label="Filtrer par rôle" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+            <option value="">Tous les rôles</option>
+            {roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="card card-flush">
+        {list.length === 0 ? <Empty icon="users" title="Aucun utilisateur trouvé" /> : (
+          <ul className="list">
+            {list.map((u) => (
+              <li key={u.id} className="list-item" style={{ opacity: u.active ? 1 : .6 }}>
+                <span className="avatar">{u.fullName.charAt(0).toUpperCase()}</span>
+                <div className="list-item-main">
+                  <div className="row" style={{ gap: 8 }}>
+                    <span className="list-item-title">{u.fullName}</span>
+                    {u.id === me.id && <Badge tone="brand">Vous</Badge>}
+                    {!u.active && <Badge tone="danger">Désactivé</Badge>}
+                    {u.mustChangePassword && u.active && <Badge tone="warn">Mot de passe provisoire</Badge>}
+                  </div>
+                  <p className="small muted">{u.username} · {roleOf(u)?.name ?? 'Rôle inconnu'}{u.phone ? ` · ${u.phone}` : ''}</p>
+                </div>
+                {canTouch(u) && (
+                  <div className="row" style={{ gap: 0 }}>
+                    <IconButton icon="key" label="Nouveau mot de passe" onClick={() => setResetFor(u)} />
+                    <IconButton icon="edit" label="Modifier" onClick={() => setEditing(u)} />
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {editing && <UserForm user={editing === 'new' ? null : editing} me={me} roles={roles} users={users}
+        onClose={() => setEditing(null)} onCreated={(user, pwd) => setShownPwd({ user, pwd })} />}
+
+      {resetFor && <Confirm title="Nouveau mot de passe" confirmLabel="Générer"
+        message={<p>Un mot de passe provisoire va être créé pour <strong>{resetFor.fullName}</strong>. Il devra le changer à sa prochaine connexion.</p>}
+        onClose={() => setResetFor(null)}
+        onConfirm={async () => {
+          const pwd = tempPassword();
+          await setPassword(resetFor.id, pwd, { mustChange: true, reason: `Réinitialisé par ${me.fullName}` });
+          setShownPwd({ user: resetFor, pwd });
+        }} />}
+
+      {shownPwd && (
+        <Modal title="Mot de passe provisoire" onClose={() => setShownPwd(null)} footer={<Button onClick={() => setShownPwd(null)}>C'est noté</Button>}>
+          <div className="stack">
+            <p>Donnez ces informations à <strong>{shownPwd.user.fullName}</strong>. Le mot de passe ne sera plus affiché ensuite.</p>
+            <div className="card" style={{ background: 'var(--surface-2)' }}>
+              <p className="small muted">Nom d'utilisateur</p>
+              <p className="num" style={{ fontSize: '1.4rem', fontWeight: 700 }}>{shownPwd.user.username}</p>
+              <p className="small muted" style={{ marginTop: 10 }}>Mot de passe provisoire</p>
+              <p className="num" style={{ fontSize: '1.8rem', fontWeight: 800, letterSpacing: '.06em' }}>{shownPwd.pwd}</p>
+            </div>
+            <Button variant="ghost" icon="check" onClick={() => {
+              navigator.clipboard?.writeText(`Identifiant : ${shownPwd.user.username}\nMot de passe provisoire : ${shownPwd.pwd}`).then(() => toast('Copié'));
+            }}>Copier pour l'envoyer</Button>
+          </div>
+        </Modal>
+      )}
+    </>
+  );
+}
+
+function UserForm({ user, me, roles, users, onClose, onCreated }: { user: User | null; me: User; roles: Role[]; users: User[]; onClose: () => void; onCreated: (u: User, pwd: string) => void }) {
+  const [fullName, setFullName] = useState(user?.fullName ?? '');
+  const [username, setUsername] = useState(user?.username ?? '');
+  const [roleId, setRoleId] = useState(user?.roleId ?? 'role-seller');
+  const [phone, setPhone] = useState(user?.phone ?? '');
+  const [email, setEmail] = useState(user?.email ?? '');
+  const [active, setActive] = useState(user?.active ?? true);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const isSelf = user?.id === me.id;
+  const isSuper = user?.id === SUPERADMIN_ID;
+  // Seul le super-admin peut donner le rôle super-admin.
+  const roleOptions = roles
+    .filter((r) => r.id !== SUPERADMIN_ROLE || me.roleId === SUPERADMIN_ROLE)
+    .map((r) => ({ value: r.id, label: r.name }));
+
+  async function submit() {
+    setError(null);
+    const uname = normUsername(username);
+    if (!fullName.trim()) return setError('Indiquez le nom complet.');
+    if (!/^[a-z0-9._-]{3,}$/.test(uname)) return setError("Identifiant : au moins 3 caractères, sans espace ni accent (lettres, chiffres, . _ -).");
+    if (users.some((u) => u.username === uname && u.id !== user?.id)) return setError('Cet identifiant est déjà utilisé.');
+    setBusy(true);
+    try {
+      const data = { fullName: fullName.trim(), username: uname, roleId, phone: phone.trim(), email: email.trim(), active };
+      if (user) {
+        await save('users', { id: user.id, ...data });
+        await audit('Utilisateur modifié', `${data.fullName} (${roles.find((r) => r.id === roleId)?.name}${active ? '' : ', désactivé'})`, 'users', user.id);
+        toast('Modifications enregistrées');
+      } else {
+        const pwd = tempPassword();
+        const [created] = await save('users', { ...data, passwordHash: await hashSecret(pwd), mustChangePassword: true });
+        await audit('Utilisateur créé', `${data.fullName} — ${roles.find((r) => r.id === roleId)?.name}`, 'users', created.id);
+        onCreated(created as User, pwd);
+      }
+      onClose();
+    } catch (e: any) { setError(e.message); } finally { setBusy(false); }
+  }
+
+  return (
+    <Modal title={user ? 'Modifier l’utilisateur' : 'Nouvel utilisateur'} onClose={onClose}
+      footer={<><Button variant="ghost" onClick={onClose}>Annuler</Button><Button busy={busy} onClick={submit}>{user ? 'Enregistrer' : 'Créer le compte'}</Button></>}>
+      <div className="stack">
+        <TextField label="Nom complet" value={fullName} onChange={setFullName} autoFocus />
+        <TextField label="Nom d'utilisateur (identifiant)" value={username} onChange={setUsername} autoCapitalize="none" disabled={isSuper} hint="Sert à se connecter. Exemple : hery, livreur.tiana" />
+        <SelectField label="Rôle" value={roleId} onChange={setRoleId} options={roleOptions} hint={roles.find((r) => r.id === roleId)?.description} />
+        <TextField label="Téléphone" value={phone} onChange={setPhone} type="tel" inputMode="tel" />
+        <TextField label="E-mail (facultatif)" value={email} onChange={setEmail} type="email" autoCapitalize="none" />
+        {user && !isSelf && !isSuper && <Toggle checked={active} onChange={setActive} label="Compte actif (décochez pour bloquer l'accès)" />}
+        {!user && <div className="notice"><Icon name="key" /><span>Un mot de passe provisoire sera créé et affiché après l'enregistrement.</span></div>}
+        {error && <div className="notice notice-danger"><Icon name="alert" /><span>{error}</span></div>}
+        {user && <p className="small muted">Compte créé {timeAgo(user.createdAt)}.</p>}
+      </div>
+    </Modal>
+  );
+}

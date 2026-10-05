@@ -1,4 +1,4 @@
-# TSENA — Cahier des charges (version 1, à valider)
+# TSENA — Cahier des charges (version 1.1, validée le 05/10/2026)
 
 > Logiciel de gestion commerciale et de comptabilité : achats (Chine), stock, ventes en ligne et en boutique, livraisons, trésorerie, rapports.
 > Fonctionne **en ligne et hors ligne** (coupure de connexion ou de courant), sur **téléphone et ordinateur** (iOS, Android, Windows, macOS).
@@ -13,7 +13,7 @@
 | **Rien ne se supprime** | Une vente, un paiement, un mouvement de stock ne s'efface jamais : on l'**annule** avec une contre-écriture et un motif. Tout reste traçable (qui, quoi, quand, sur quel appareil). |
 | **Le stock = la somme des mouvements** | Le stock n'est jamais « tapé » directement : il est calculé à partir des entrées, sorties, retours, ajustements. Ça évite les conflits quand deux appareils travaillent hors ligne en même temps. |
 | **Tout est paramétrable** | Catégories d'articles, catégories de revenus et de dépenses, zones et frais de livraison, moyens de paiement, rôles : tout s'ajoute sans toucher au code. |
-| **Monnaie** | Ariary (MGA) pour tout. Les achats peuvent être saisis en devise (CNY, USD…) avec taux de change. |
+| **Monnaie** | Ariary (MGA) pour tout. Les achats en Chine se saisissent en **RMB (yuan)** ou en **Ariary**, avec le taux de change du jour. |
 
 ---
 
@@ -32,7 +32,7 @@
 
 - Seul l'**Admin** crée les comptes et attribue les rôles. Un utilisateur ne peut rien faire avant d'avoir été créé par l'admin.
 - Les droits sont présentés sous forme de **matrice cochable** (rôle × fonction) : l'admin peut ajuster un rôle ou créer un rôle personnalisé.
-- **Menus non autorisés ou pas encore disponibles** : ils restent visibles mais **grisés avec une étiquette** (« Accès réservé », « Bientôt disponible », « Hors ligne indisponible ») au lieu de disparaître ou de s'ouvrir sur une erreur.
+- Chaque utilisateur ne voit **que les menus de son rôle**.
 
 ### 2.2 Connexion et sécurité
 
@@ -51,7 +51,6 @@
 - **Catégories et sous-catégories** illimitées (ajout, renommage, archivage).
 - **Article** : nom, code/SKU, code-barres (scan par la caméra du téléphone), photo(s), catégorie, unité, prix d'achat moyen (coût de revient), prix de vente détail, prix de gros *(optionnel)*, seuil d'alerte stock, statut (actif / archivé).
 - **Variantes** *(ajout important)* : taille, couleur, pointure… Chaque variante a son propre stock. Indispensable pour les « choix » de taille envoyés aux clients.
-- **Disponibilité visible partout** : un article en rupture est marqué « Épuisé » (ou « En arrivage — date prévue ») dans la recherche et à la vente, au lieu d'apparaître comme disponible.
 
 ---
 
@@ -59,7 +58,7 @@
 
 ### 4.1 Fournisseurs et commandes d'achat
 - Fiche fournisseur (nom, contact WeChat/téléphone, ville, notes).
-- **Commande d'achat** : fournisseur, date, devise + taux de change, lignes (article existant **ou nouvel article / nouvelle catégorie créés à la volée**), quantité, prix unitaire.
+- **Commande d'achat** : fournisseur, date, devise (RMB ou Ariary) + taux de change, lignes (article existant **ou nouvel article / nouvelle catégorie créés à la volée**), quantité, prix unitaire.
 - Paiements au fournisseur (acomptes, solde) et suivi de ce qui reste à payer.
 
 ### 4.2 Expédition (colis / conteneur) — *ajout*
@@ -68,7 +67,7 @@
 - Frais d'approche : transport international, dédouanement, transitaire, transport local, autres.
 
 ### 4.3 Coût de revient (essentiel pour un bénéfice juste) — *ajout*
-- Les frais d'approche sont **répartis sur les articles** de l'expédition (au choix : par valeur, par quantité, par poids/volume).
+- Les frais d'approche sont **répartis sur les articles** de l'expédition — **par valeur** par défaut, ou au choix par quantité ou par poids/volume, expédition par expédition.
 - Coût de revient unitaire = prix d'achat converti en Ariary + part des frais.
 - Le prix d'achat moyen de l'article est recalculé à chaque arrivage (**coût moyen pondéré**) : le bénéfice est donc calculé sur ce que l'article a réellement coûté.
 
@@ -228,7 +227,7 @@ Un résumé court, envoyé en un clic (WhatsApp, Messenger, SMS, e-mail ou PDF) 
 
 ## 13. Impression
 
-- **Ticket de caisse** (imprimante thermique 58 mm ou 80 mm).
+- **Ticket de caisse** sur imprimante thermique **58 mm**.
 - Bon de commande / bon de livraison, **feuille de route livreur**, liste de préparation.
 - Étiquettes articles avec code-barres et prix *(ajout)*.
 - Récapitulatif de clôture, rapports en PDF.
@@ -256,7 +255,7 @@ Un résumé court, envoyé en un clic (WhatsApp, Messenger, SMS, e-mail ou PDF) 
 - Interface moderne, rapide, pensée **d'abord pour le téléphone**, confortable aussi sur ordinateur.
 - Thème **clair / sombre / automatique** (selon le téléphone).
 - **Couleur principale au choix**, nom et logo de la société modifiables.
-- Langue : Français (+ Malagasy à confirmer).
+- Langue : **français**.
 - **Application web installable (PWA)** : icône sur l'écran d'accueil, plein écran, fonctionne hors ligne — sur iPhone/iPad (Safari → « Sur l'écran d'accueil »), Android (Chrome → « Installer »), Windows et macOS (Chrome/Edge → « Installer »).
 
 ---
@@ -277,7 +276,7 @@ Un résumé court, envoyé en un clic (WhatsApp, Messenger, SMS, e-mail ou PDF) 
 
 | Étape | Contenu | Ce que vous pourrez faire à la fin |
 |---|---|---|
-| **0** | Validation de ce cahier des charges + création du compte Supabase | — |
+| **0** | Validation de ce cahier des charges ✅ | — |
 | **1** | Fondations : appli installable, connexion, rôles, super-admin, thème, logo, mode hors ligne + synchronisation | Installer l'appli, créer les utilisateurs |
 | **2** | Catégories, articles, variantes, stock + **modèles Excel et import** | Charger votre stock actuel |
 | **3** | Fournisseurs, achats Chine, expéditions, coût de revient, réception | Saisir les commandes en attente d'arrivage |

@@ -1,0 +1,96 @@
+// Mon compte : mot de passe, question secrète, thème, déconnexion.
+import { useState } from 'react';
+import { checkPasswordStrength, logout, roleOf, SECRET_QUESTIONS, setPassword, setSecretQuestion, audit, useCurrentUser } from '../lib/auth';
+import { verifySecret } from '../lib/crypto';
+import { PERMISSIONS, SUPERADMIN_ROLE } from '../lib/permissions';
+import { Badge, Button, PageHead, PasswordField, SelectField, TextField, toast } from '../ui/kit';
+import { ThemePicker } from './Settings';
+
+export function AccountPage() {
+  const me = useCurrentUser()!;
+  const role = roleOf(me);
+  const perms = me.roleId === SUPERADMIN_ROLE ? PERMISSIONS : PERMISSIONS.filter((p) => role?.permissions.includes(p.key));
+
+  return (
+    <>
+      <PageHead title="Mon compte" subtitle={`${me.fullName} · ${me.username}`} actions={<Button variant="ghost" icon="logout" onClick={() => logout()}>Se déconnecter</Button>} />
+      <div className="grid-2" style={{ alignItems: 'start' }}>
+        <div className="stack">
+          <PasswordCard />
+          <SecretCard />
+        </div>
+        <div className="stack">
+          <div className="card stack">
+            <h3>Thème</h3>
+            <ThemePicker />
+          </div>
+          <div className="card stack-s">
+            <div className="row-between"><h3>Mon rôle</h3><Badge tone="brand">{role?.name}</Badge></div>
+            <p className="small muted">{role?.description}</p>
+            <ul className="small" style={{ margin: '8px 0 0', paddingLeft: 18 }}>
+              {perms.map((p) => <li key={p.key}>{p.label}</li>)}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function PasswordCard() {
+  const me = useCurrentUser()!;
+  const [old, setOld] = useState('');
+  const [pwd, setPwd] = useState('');
+  const [pwd2, setPwd2] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const strength = pwd ? checkPasswordStrength(pwd) : null;
+  return (
+    <form className="card stack" onSubmit={async (e) => {
+      e.preventDefault();
+      setError(null);
+      if (!(await verifySecret(old, me.passwordHash))) return setError('Le mot de passe actuel est incorrect.');
+      if (strength) return;
+      if (pwd !== pwd2) return setError('Les deux nouveaux mots de passe ne sont pas identiques.');
+      setBusy(true);
+      await setPassword(me.id, pwd, { reason: 'Changé par l’utilisateur' });
+      setBusy(false);
+      setOld(''); setPwd(''); setPwd2('');
+      toast('Mot de passe changé');
+    }}>
+      <h3>Changer mon mot de passe</h3>
+      <PasswordField label="Mot de passe actuel" value={old} onChange={setOld} />
+      <PasswordField label="Nouveau mot de passe" value={pwd} onChange={setPwd} autoComplete="new-password" error={strength} />
+      <PasswordField label="Retapez le nouveau mot de passe" value={pwd2} onChange={setPwd2} autoComplete="new-password" error={error} />
+      <div><Button type="submit" busy={busy} disabled={!old || !pwd || !pwd2}>Changer le mot de passe</Button></div>
+    </form>
+  );
+}
+
+function SecretCard() {
+  const me = useCurrentUser()!;
+  const known = SECRET_QUESTIONS.includes(me.secretQuestion || '');
+  const [question, setQuestion] = useState(known ? me.secretQuestion! : me.secretQuestion ? '__custom' : SECRET_QUESTIONS[0]);
+  const [custom, setCustom] = useState(known ? '' : me.secretQuestion || '');
+  const [answer, setAnswer] = useState('');
+  const [busy, setBusy] = useState(false);
+  const final = question === '__custom' ? custom.trim() : question;
+  return (
+    <form className="card stack" onSubmit={async (e) => {
+      e.preventDefault();
+      setBusy(true);
+      await setSecretQuestion(me.id, final, answer);
+      await audit('Compte', 'Question secrète modifiée', 'users', me.id);
+      setBusy(false);
+      setAnswer('');
+      toast('Question secrète enregistrée');
+    }}>
+      <h3>Question secrète</h3>
+      <SelectField label="Question" value={question} onChange={setQuestion}
+        options={[...SECRET_QUESTIONS.map((q) => ({ value: q, label: q })), { value: '__custom', label: 'Écrire ma propre question…' }]} />
+      {question === '__custom' && <TextField label="Votre question" value={custom} onChange={setCustom} />}
+      <TextField label="Nouvelle réponse" value={answer} onChange={setAnswer} autoComplete="off" hint="Les majuscules et les accents ne comptent pas." />
+      <div><Button type="submit" busy={busy} disabled={!final || answer.trim().length < 2}>Enregistrer</Button></div>
+    </form>
+  );
+}
