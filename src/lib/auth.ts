@@ -120,6 +120,7 @@ export async function login(username: string, password: string): Promise<User> {
   }
   if (!user.active) throw new Error("Ce compte est désactivé. Contactez l'admin.");
   await setMeta('loginFails', { ...fails, [user.username]: { n: 0 } });
+  await setMeta('setupSkipped', false);
   await setMeta('session', { userId: user.id, at: new Date().toISOString() });
   await setMeta('lastActivity', Date.now());
   await audit('Connexion', `${user.fullName} s'est connecté(e)`);

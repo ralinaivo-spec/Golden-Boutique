@@ -231,7 +231,11 @@ export function FirstSetupScreen({ user }: { user: User }) {
         {error && <div className="notice notice-danger"><Icon name="alert" /><span>{error}</span></div>}
         <Button type="submit" busy={busy} block>Terminer</Button>
       </form>
-      <Button variant="quiet" onClick={() => logout()}>Se déconnecter</Button>
+      <div className="row-between">
+        <Button variant="ghost" onClick={async () => { await audit('Compte', 'Première configuration reportée', 'users', user.id); await setMeta('setupSkipped', true); }}>Plus tard</Button>
+        <Button variant="quiet" onClick={() => logout()}>Se déconnecter</Button>
+      </div>
+      <p className="small muted">« Plus tard » : cet écran reviendra à la prochaine connexion.</p>
     </AuthShell>
   );
 }

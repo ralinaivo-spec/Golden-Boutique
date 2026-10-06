@@ -32,6 +32,16 @@ export function DashboardPage() {
   return (
     <>
       <PageHead title={`${hello}, ${me.fullName.split(' ')[0]}`} subtitle={<span style={{ textTransform: 'capitalize' }}>{today}</span>} />
+      {(me.mustChangePassword || !me.secretAnswerHash) && (
+        <div className="notice">
+          <Icon name="key" />
+          <span>
+            {me.mustChangePassword ? 'Votre compte utilise encore le mot de passe provisoire. ' : ''}
+            {!me.secretAnswerHash ? 'Aucune question secrète n’est définie. ' : ''}
+            <a href="#/compte">Régler maintenant dans Mon compte</a>
+          </span>
+        </div>
+      )}
 
       <div className="grid-2">
         {can('users.manage') && (

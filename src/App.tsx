@@ -1,7 +1,7 @@
 // Structure de l'application : démarrage, accès, menu adapté au rôle, pages.
 import { useEffect, useState, type ReactNode } from 'react';
 import { roleOf, useCan, useCurrentUser, logout } from './lib/auth';
-import { getMeta, setMeta } from './lib/db';
+import { getMeta, setMeta, useMeta } from './lib/db';
 import { useApplyAppearance, useCompany } from './lib/settings';
 import { syncNow, useSyncStatus } from './lib/sync';
 import { autoCloudBackup } from './lib/backup';
@@ -31,6 +31,7 @@ export function App() {
   const user = useCurrentUser();
   const company = useCompany();
   const [locked, setLocked] = useState(false);
+  const setupSkipped = useMeta<boolean>('setupSkipped', false);
 
   // Verrouillage automatique après inactivité.
   useEffect(() => {
@@ -56,7 +57,7 @@ export function App() {
   let screen: ReactNode;
   if (!user) screen = <LoginScreen />;
   else if (locked) screen = <LockScreen user={user} onUnlock={() => setLocked(false)} />;
-  else if (user.mustChangePassword || !user.secretAnswerHash) screen = <FirstSetupScreen user={user} />;
+  else if ((user.mustChangePassword || !user.secretAnswerHash) && !setupSkipped) screen = <FirstSetupScreen user={user} />;
   else screen = <Shell />;
 
   return (
