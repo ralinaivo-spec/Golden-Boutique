@@ -2582,7 +2582,9 @@ async function ghLoadAll(){
   paths.forEach((p,i)=>{const k=ghKey(p);BI.C[k]=txt[i];BI.SRV[k]={id:st.map[p],s:txt[i]}});
   BI.gh.head=st.head;BI.gh.etag=st.etag;BI.gh.map=st.map;
   // Premier branchement par l'administrateur : le dépôt est vide → on y envoie les données de cet appareil
-  if(!paths.length&&BI.gh.cfg.seed){
+  // (seulement si cet appareil a de vraies données : pas juste le compte super-adm d'origine jamais utilisé)
+  const ghReal=(()=>{try{const L=JSON.parse(localStorage.getItem('bi_u2')||'[]');return L.length>1||L.some(x=>!x.must)}catch(e){return false}})();
+  if(!paths.length&&BI.gh.cfg.seed&&ghReal){
     try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!/^bi_/.test(k)||ghLocalOnly(k))continue;const raw=localStorage.getItem(k);if(raw==null)continue;
       if(k=='bi_d'){try{const v=JSON.parse(raw);for(const x in v){BI.C['bi_d.'+x]=JSON.stringify(v[x]);BI.dirty.add('bi_d.'+x)}}catch(e){}}else{BI.C[k]=raw;BI.dirty.add(k)}}}catch(e){}
   }
