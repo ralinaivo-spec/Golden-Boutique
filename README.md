@@ -16,6 +16,18 @@ Le menu **Équipe et accès** contient **Employés** et **Rôles et permissions*
 - **Mots de passe** : le super-administrateur peut à tout moment choisir le mot de passe de n'importe quel compte (bouton clé dans Employés, ou « Modifier le mot de passe » dans la fiche d'un employé), avec option « Générer » et, si souhaité, obligation pour l'employé de choisir son propre mot de passe à la prochaine connexion. Les autres gestionnaires peuvent seulement réinitialiser avec un mot de passe temporaire.
 - Pour une personne en particulier, des accès peuvent être ajoutés ou retirés en plus de ceux de son rôle (Employés › Modifier).
 
+## Données dans GitHub (recommandé)
+
+Le logiciel peut enregistrer **toutes ses données dans un dépôt GitHub privé** (`Golden-Boutique-Donnees`) : un fichier par rubrique dans le dossier `donnees/`, et un commit à chaque enregistrement. L'historique du dépôt garde donc toutes les versions passées.
+
+- **Adresse du logiciel** : https://ralinaivo-spec.github.io/Golden-Boutique/ (ce dépôt doit être public pour GitHub Pages ; il ne contient que le logiciel, aucune donnée).
+- **Relier** (administrateur, une seule fois) : écran de connexion › « Administrateur : relier aux données GitHub », avec le nom du dépôt privé et une clé d'accès GitHub (*fine-grained token*, accès « Contents : Read and write » limité au dépôt des données). Si le dépôt est vide, les comptes et les données de l'appareil y sont envoyés.
+- **Inviter** : Paramètres › Réseau › lien d'invitation (QR code, WhatsApp, e-mail). Chaque employé l'ouvre **une fois** sur son appareil ; ensuite l'adresse simple suffit.
+- **Sécurité** : le lien d'invitation contient la clé d'accès aux données. Ne l'envoyez qu'en message privé. Si un appareil est perdu ou qu'un employé part : supprimez la clé sur GitHub, créez-en une nouvelle, reliez à nouveau et renvoyez le lien.
+- Plusieurs appareils peuvent enregistrer en même temps : les modifications sont fusionnées fiche par fiche.
+
+Le kit `serveur/` (Mac + PocketBase, même Wi-Fi) reste disponible comme autre solution.
+
 ## Sauvegarde
 
 Les données restent dans le navigateur de chaque appareil. Faites régulièrement une sauvegarde depuis **Paramètres** (fichier `.json`) et gardez-la en lieu sûr.

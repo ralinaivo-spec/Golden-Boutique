@@ -1093,7 +1093,7 @@ let SETT='gen';
 const devN=()=>{const a=navigator.userAgent;return /iPhone/.test(a)?'iPhone':/iPad/.test(a)?'iPad':/Android/.test(a)?'Android':/Macintosh/.test(a)?'Mac':/Windows/.test(a)?'PC Windows':'Navigateur'};
 let SID='';try{SID=sessionStorage.getItem('bi_sid')||uid('d');sessionStorage.setItem('bi_sid',SID)}catch(e){SID=uid('d')}
 function prBeat(){if(!me)return;ssv('bi_pr.'+SID,{u:me,dv:devN(),h:location.hostname,t:Date.now()})}
-function prList(){const o=[],keys=BI.mode=='server'?Object.keys(BI.C):(()=>{const k=[];try{for(let i=0;i<localStorage.length;i++)k.push(localStorage.key(i))}catch(e){}return k})();keys.filter(k=>k.startsWith('bi_pr.')).forEach(k=>{const x=lsg(k,null);if(x&&x.u&&Date.now()-x.t<3*60e3)o.push({...x,me:k=='bi_pr.'+SID})});return o.sort((a,b)=>a.u<b.u?-1:1)}
+function prList(){const o=[],keys=BI.mode=='server'&&!BI.gh?Object.keys(BI.C):(()=>{const k=[];try{for(let i=0;i<localStorage.length;i++)k.push(localStorage.key(i))}catch(e){}return k})();keys.filter(k=>k.startsWith('bi_pr.')).forEach(k=>{const x=lsg(k,null);if(x&&x.u&&Date.now()-x.t<3*60e3)o.push({...x,me:k=='bi_pr.'+SID})});return o.sort((a,b)=>a.u<b.u?-1:1)}
 const setTabs=()=>`<div class=stabs role=tablist>${[['gen','Général','gear'],['net','Réseau','link'],['bak','Sauvegarde','dl'],['log','Journal','file']].map(([k,l,i])=>`<button role=tab class="${SETT==k?'on':''}" aria-selected=${SETT==k} onclick="SETT='${k}';show('set')">${ic(i,16)}${l}</button>`).join('')}</div>`;
 V.set=()=>{const E=can('set','e');const t={gen:setGen,net:setNet,bak:setBak,log:setLog}[SETT]||setGen;
 return head('Paramètres','Identité de la boutique, réseau, sauvegardes et journal. Chaque modification est répercutée dans les calculs et les tableaux de bord.',SETT=='gen'&&E?B('Enregistrer les paramètres','setSave()','b','check'):'')+setTabs()+t(E)};
@@ -1107,7 +1107,7 @@ return`<div class=g2><div class=card><h2>Identité de la boutique</h2><div class
 <div class=card><div class=ch2><h2>Ticket de caisse</h2>${can('sales')?B('Voir un ticket',E?'setSave(1)':'tkDemo()','o sm','receipt'):''}</div><p class=mut style="margin-top:0">Coordonnées et message imprimés sur chaque ticket. Le nom et le logo viennent de l’identité de la boutique.</p><div class=fg><label class=w2>Adresse<input id=tka value="${esc(c.adr||'')}" ${dis} placeholder="Ex. Lot II A 45, Analakely, Antananarivo 101"></label><label>Téléphone<input id=tkt value="${esc(c.tel||'')}" ${dis}></label><label>E-mail<input id=tke type=email value="${esc(c.mail||'')}" ${dis}></label><label>NIF (facultatif)<input id=tkn value="${esc(c.nif||'')}" ${dis}></label><label>STAT (facultatif)<input id=tks value="${esc(c.stat||'')}" ${dis}></label><label>TVA incluse dans les prix (%)<input id=tkv type=number min=0 max=50 step=.1 value="${+c.tva||0}" ${dis} title="0 = pas de ligne de taxe sur le ticket"></label><label>Largeur du rouleau${sel('tkw',[['80','80 mm'],['58','58 mm']],String(c.tkw||80),dis)}</label><label class=w2>Message de remerciement<input id=tkm value="${esc(c.tkMsg||'')}" ${dis}></label><label class=ck style="align-self:end;margin-bottom:8px;grid-column:span 2;width:fit-content"><input type=checkbox id=tkau ${c.tkAuto?'checked':''} ${dis}> Proposer le ticket après chaque vente</label></div><p class=mut style="font-size:.86em;margin-bottom:0">Si la TVA est à 0, aucune ligne de taxe n’apparaît. Sinon, le ticket indique la part de TVA comprise dans le total.</p></div>
 ${isAdm(cur())?`<div class=card><h2>Données d’exemple</h2><p class=mut style="margin-top:0">Les données d’exemple remplacent tout le catalogue, les arrivages et les ventes. « Tout effacer » garde les paramètres, les comptes et les rôles.</p><div class=pa>${B('Charger les données d’exemple','loadSeed()','o')}${B('Tout effacer','wipe()','o dng','trash')}</div></div>`:''}`}
 function setNet(){const A=isAdm(cur()),P=prList(),sv=BI.mode=='server',byU={};P.forEach(x=>(byU[x.u]=byU[x.u]||[]).push(x));
-return`<div class=g2><div>${biNetCard()}<div class=card><h2>Plusieurs appareils en même temps</h2><p class=mut style="margin:0">Tous les appareils travaillent sur les mêmes données, enregistrées sur l’ordinateur principal. Un même compte peut être ouvert sur deux appareils à la fois. Les modifications sont envoyées au serveur en moins d’une seconde et fusionnées fiche par fiche : deux personnes qui modifient des fiches différentes ne s’écrasent jamais, et le stock est recalculé à partir des opérations. ${sv?'':'<br><br><b>Mode actuel : ce navigateur uniquement.</b> Pour partager les données, ouvrez le logiciel depuis le serveur (Demarrer-Boutique, puis http://localhost:8090).'}</p></div></div>
+return`<div class=g2><div>${biNetCard()}<div class=card><h2>Plusieurs appareils en même temps</h2><p class=mut style="margin:0">Tous les appareils travaillent sur les mêmes données, enregistrées ${BI.gh?'dans votre dépôt GitHub privé':'sur l’ordinateur principal'}. Un même compte peut être ouvert sur deux appareils à la fois. Les modifications sont envoyées ${BI.gh?'à GitHub en quelques secondes':'au serveur en moins d’une seconde'} et fusionnées fiche par fiche : deux personnes qui modifient des fiches différentes ne s’écrasent jamais, et le stock est recalculé à partir des opérations. ${sv?'':'<br><br><b>Mode actuel : ce navigateur uniquement.</b> Pour partager les données, reliez le logiciel à votre dépôt GitHub privé (carte ci-dessus).'}</p></div></div>
 <div class=card><div class=ch2><h2>Connexions actives</h2>${B('Actualiser',"show('set')",'o sm','sync')}</div><p class=mut style="margin-top:0">Appareils actifs ces 3 dernières minutes.</p>${P.length?P.map(x=>{const u=US.find(y=>y.u==x.u)||{u:x.u};return`<div class=lr><span class=av>${ini(u.nm||u.u)}</span><div style="flex:1;min-width:0"><b>${esc(u.nm||u.u)}</b>${x.me?' <span class="bd gr">cet appareil</span>':''}<div class=mut style="font-size:.86em">${esc(x.dv)} · ${!x.h||/^(localhost|127\.)/.test(x.h)?'ordinateur principal':'réseau Wi-Fi'} · actif il y a ${Math.max(0,Math.round((Date.now()-x.t)/60e3))} min</div></div>${byU[x.u].length>1?`<span class=bd>${byU[x.u].length} appareils</span>`:''}</div>`}).join(''):'<p class=mut>Aucune connexion détectée.</p>'}</div></div>
 ${A?`<div class=card><div class=ch2><h2>Identifiants des employés</h2>${B('Ajouter un employé','empNew()','o sm','plus')}</div><p class=mut style="margin-top:0">Chaque employé se connecte avec son propre nom d’utilisateur et son mot de passe. Décochez « Accès depuis un autre appareil » pour limiter un compte à l’ordinateur principal.</p>${nm?`<div class=note>${nm}</div>`:''}${T(['Employé','Nom d’utilisateur','Rôle','Accès depuis un autre appareil','Statut',''],US.map(x=>{const m=canMg(x);return tr([`<b>${esc(x.nm||x.u)}</b>`,`<code>${esc(x.u)}</code>`,x.super?'<span class="bd ac">Super-administrateur</span>':rchip(x.role),TOT(x.role)?'<span class=mut>Toujours</span>':`<label class=ck style="margin:0"><input type=checkbox ${x.net===0?'':'checked'} ${m?'':'disabled'} onchange="netSet('${esc(x.u)}',this.checked)"> Autorisé</label>`,x.off?'<span class="bd r">Désactivé</span>':x.must?'<span class="bd a">À activer</span>':'<span class="bd gr">Actif</span>',m?`<div class=pa style="justify-content:flex-end;flex-wrap:nowrap">${B('Identifiant',`netUser('${esc(x.u)}')`,'o sm','edit')}${B('Mot de passe',`netRp('${esc(x.u)}')`,'o sm','key')}${B(x.off?'Réactiver':'Désactiver',`offU('${esc(x.u)}');show('set')`,'o sm')}</div>`:''],1)}).join(''))}</div>`:''}`}
 function netSet(un,v){const t=US.find(x=>x.u==un);if(!canMg(t))return denied();t.net=v?1:0;svU();log((v?'accès réseau autorisé : ':'accès réseau retiré : ')+un);toast(v?'Accès depuis un autre appareil autorisé.':'Compte limité à l’ordinateur principal.')}
@@ -1160,7 +1160,7 @@ function login(m=''){const loc=BI.mode!='server',url=biNetUrl(),pub=BI.net&&BI.n
 X(`<h1 style="font-size:1.5em">Connexion</h1><p class=mut style="margin:4px 0 6px">Utilisez vos identifiants <b>Golden Boutique</b>, fournis par l’administrateur. Votre compte Google ou Gmail n’est pas utilisé ici.</p>${col(fld('Nom d’utilisateur ou adresse e-mail','lu','text','autocomplete=username inputmode=email autocapitalize=off autocorrect=off spellcheck=false onkeydown="if(event.key==\'Enter\'){event.preventDefault();$(\'#lp\').focus()}"')+`<label>Mot de passe<span class=pww><input id=lp type=password autocomplete=current-password autocapitalize=off autocorrect=off spellcheck=false onkeydown="if(event.key=='Enter'){event.preventDefault();doLogin()}">${pwEye('lp')}</span></label>`)}
 <label class=ck style="margin:10px 0 2px"><input type=checkbox id=lk ${keepGet()!==''?'checked':''}> Rester connecté sur cet appareil</label>
 <p class=msg id=ms role=alert>${m}</p>${B('Se connecter','doLogin()')}${lk('Mot de passe oublié ?','forgot()')}
-${loc?`<div class=note style="margin-top:14px;font-size:.88em"><b>Mode local :</b> ce navigateur garde ses propres données et ses propres comptes. Pour utiliser les comptes et les données de la boutique depuis un autre appareil, ouvrez le <b>lien d’accès</b> de l’ordinateur principal (affiché dans Paramètres › Réseau quand le logiciel tourne sur le serveur).</div>`:''}
+${loc?`<div class=note style="margin-top:14px;font-size:.88em">${/\.github\.io$/.test(location.hostname)?'<b>Lien incomplet :</b> pour accéder aux comptes et aux données de la boutique, ouvrez le <b>lien d’invitation</b> envoyé par l’administrateur (WhatsApp ou e-mail), en entier.':'<b>Mode local :</b> ce navigateur garde ses propres données et ses propres comptes. Pour utiliser les comptes et les données de la boutique, ouvrez le <b>lien d’invitation</b> envoyé par l’administrateur.'}<div style="margin-top:8px"><a onclick="ghSetup()">Administrateur : relier aux données GitHub</a></div></div>`:''}
 ${!loc&&/^(localhost|127\.)/.test(location.hostname)&&(url||pub)?`<p class=mut style="margin-top:14px;font-size:.88em">Lien pour les autres appareils : ${url?`<b>${esc(url)}</b> (même Wi-Fi)`:''}${pub?`<br>Depuis Internet : <b>${esc(pub)}</b>`:''}</p>`:''}
 ${BI.fresh?`<div class=note style="margin-top:14px;font-size:.88em">Nouvelle installation : vous pouvez reprendre vos données en important un fichier de sauvegarde (.json).<div style="margin-top:8px">${B('Importer une sauvegarde','biPick()','o sm','sync')}</div></div>`:''}${lsg('bi_mig',0)&&!US.some(x=>x.super&&x.must)?'<div class=note style="margin-top:14px;font-size:.88em">Vos comptes de l’ancienne version ont été repris : connectez-vous avec <b>le mot de passe que vous utilisiez avant</b>, pas le mot de passe initial.</div>':''}${US.some(x=>x.super&&x.must)?'<p class=mut style="margin:16px 0 0;font-size:.85em;text-align:center">Première installation : compte initial <b>super-adm</b> / <b>Ampandrana</b>. Vous choisirez votre propre mot de passe à la première connexion.</p>':''}`)}
 async function doLogin(){const n=$('#lu').value,p=$('#lp').value;if(!n.trim()||!p)return msg('Saisissez votre identifiant (nom d’utilisateur ou e-mail) et votre mot de passe.');
@@ -1169,7 +1169,7 @@ const u=findU(n),bad=t=>{LF.n++;LF.t=Date.now();msg(t)};
 if(!u)return bad(BI.mode!='server'?'Aucun compte avec cet identifiant dans ce navigateur (mode local). Les comptes de la boutique sont sur l’ordinateur principal : ouvrez son lien d’accès.':'Aucun compte Golden Boutique avec cet identifiant. Vérifiez l’orthographe, ou demandez à l’administrateur de créer votre compte (avec votre adresse e-mail).');
 if(u.h!=await hs(p)&&u.h!=await hs(p.trim()))return bad('Mot de passe incorrect. Vérifiez les majuscules (le clavier du téléphone met souvent une majuscule au début) ou utilisez l’œil pour afficher ce que vous tapez.');
 if(u.off)return msg('Ce compte est désactivé. Contactez l’administrateur.');
-if(u.net===0&&u.role!='admin'&&BI.mode=='server'&&!/^(localhost|127\.)/.test(location.hostname))return msg('Ce compte peut se connecter uniquement sur l’ordinateur principal. Demandez l’accès depuis un autre appareil à l’administrateur.');
+if(u.net===0&&u.role!='admin'&&BI.mode=='server'&&!BI.gh&&!/^(localhost|127\.)/.test(location.hostname))return msg('Ce compte peut se connecter uniquement sur l’ordinateur principal. Demandez l’accès depuis un autre appareil à l’administrateur.');
 LF={n:0,t:0};me=u.u;PV=null;try{sessionStorage.setItem('bi_s',me)}catch(e){}keepSet($('#lk')&&$('#lk').checked?me:'');loadTh();log('connexion ('+devN()+')');(u.must||!u.email||!u.q)?first():show(home())}
 function first(){const u=cur();X(`<h2>Première connexion</h2><p class=mut>Bonjour ${esc(u.nm||u.u)}. Configurez votre compte pour continuer.</p>${col((u.must?pw2:'')+fld('Adresse e-mail','em','email',`value="${esc(u.email||'')}"`)+`<label>Question secrète<select id=qs onchange="$('#qo').style.display=this.value=='x'?'':'none'">${QS.map(x=>`<option>${x}</option>`).join('')}<option value=x>Autre question…</option></select></label><input id=qo placeholder="Votre question" style="display:none">`+fld('Réponse','an'))}<p class=msg id=ms></p>${B('Enregistrer et entrer','saveFirst()')}`)}
 async function saveFirst(){const u=cur(),e=$('#em').value.trim(),qv=$('#qs').value=='x'?$('#qo').value.trim():$('#qs').value,a=$('#an').value;if(u.must){const p=$('#n1').value;if(!pwOK(p))return msg('Mot de passe trop faible ou identique au mot de passe initial.');if(p!=$('#n2').value)return msg('Les deux mots de passe diffèrent.')}if(!/^\S+@\S+\.\S+$/.test(e))return msg('Adresse e-mail invalide.');if(!qv||norm(a).length<2)return msg('Question et réponse requises.');if(u.must){u.h=await hs($('#n1').value);u.must=0}u.email=e;u.q=qv;u.a=await hs(norm(a));svU();log('compte configuré');show(home())}
@@ -1194,7 +1194,7 @@ function sbT(o){document.body.classList.toggle('sbo',o==null?!document.body.clas
 document.addEventListener('click',e=>{const p=$('#np');if(p&&p.classList.contains('on')&&!e.target.closest('.nw'))p.classList.remove('on')});
 document.addEventListener('keydown',e=>{if(e.key=='Escape'){cm();npT(0);sbT(0)}});
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(cur()&&!document.body.classList.contains('auth'))renderTop()});
-function show(v){const u=cur();if(!u||u.off)return login();document.title=BN();if(!V[v]||!can(v))v=home();cv=v;cm();document.body.classList.remove('auth','sbo');renderNav();renderTop();if(u.net===0&&BI.mode=='server'&&!/^(localhost|127\.)/.test(location.hostname)&&!isAdm(u)){toast('Votre compte n’est pas autorisé à se connecter depuis un autre appareil.');return out()}if(!show.pb){show.pb=1;prBeat();snapAuto()}$('#m').innerHTML=(PV?pvBanner():'')+subTabs(v)+V[v]();(POST[v]||(()=>{}))();scrollTo(0,0)}
+function show(v){const u=cur();if(!u||u.off)return login();document.title=BN();if(!V[v]||!can(v))v=home();cv=v;cm();document.body.classList.remove('auth','sbo');renderNav();renderTop();if(u.net===0&&BI.mode=='server'&&!BI.gh&&!/^(localhost|127\.)/.test(location.hostname)&&!isAdm(u)){toast('Votre compte n’est pas autorisé à se connecter depuis un autre appareil.');return out()}if(!show.pb){show.pb=1;prBeat();snapAuto()}$('#m').innerHTML=(PV?pvBanner():'')+subTabs(v)+V[v]();(POST[v]||(()=>{}))();scrollTo(0,0)}
 // ================= Serveur : actualisation en direct et sauvegardes =================
 const biPend=new Set();
 function applyRemote(keys){keys=keys.filter(k=>!k.startsWith('bi_sn')&&(!k.startsWith('bi_pr.')||(cv=='set'&&SETT=='net'&&!biBusyUI())));if(!keys.length)return;const has=p=>keys.some(k=>k==p||k.startsWith(p+'.'));
@@ -1211,8 +1211,8 @@ function biBar(on){let e=$('#bi-up');if(!on){if(e)e.remove();return}if(e)return;
 function biRefresh(){biPend.clear();biBar(0);const y=scrollY;show(cv);scrollTo(0,y)}
 function biRender(){if(!biPend.size)return;if(!me||document.body.classList.contains('auth')){biPend.clear();return}if(biBusyUI())return biBar(1);biRefresh()}
 const lnkU=k=>k=='p'?biPubUrl():k=='w'?biNetUrl():(biPubUrl()||biNetUrl());
-function biNetCard(){const w=biNetUrl(),p=typeof biPubUrl=='function'?biPubUrl():'',loc=/^(localhost|127\.)/.test(location.hostname);
-if(BI.mode!='server')return`<div class=card><h2>Se connecter depuis un autre appareil</h2><p class=mut style="margin:0">Vous utilisez actuellement le logiciel en <b>mode local</b> (fichier ouvert directement) : les comptes et les données restent dans ce navigateur. Pour que tous les appareils partagent les mêmes données, lancez <b>Demarrer-Boutique.command</b> sur l’ordinateur principal, puis ouvrez <b>http://localhost:8090</b>. Les liens d’accès s’afficheront ici.</p></div>`;
+function biNetCard(){if(BI.gh)return ghNetCard();const w=biNetUrl(),p=typeof biPubUrl=='function'?biPubUrl():'',loc=/^(localhost|127\.)/.test(location.hostname);
+if(BI.mode!='server')return`<div class=card><h2>Se connecter depuis un autre appareil</h2><p class=mut style="margin:0">Vous utilisez actuellement le logiciel en <b>mode local</b> : les comptes et les données restent dans ce navigateur. Pour que tous les appareils (téléphones, ordinateurs) partagent les mêmes données, reliez le logiciel à votre dépôt GitHub privé : le lien d’invitation pour les employés s’affichera ici.</p>${isAdm(cur())?`<div class=pa style="margin-top:12px">${B('Relier aux données GitHub','ghSetup()','b','link')}</div>`:''}</div>`;
 const blk=(u,t,d,k)=>`<div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin-top:12px"><div style="padding:6px;background:#fff;border-radius:10px;border:1px solid var(--line,#ddd)">${biQrSvg(u)}</div><div style="flex:1;min-width:200px"><div class=mut style="font-size:.88em">${t}</div><div style="font-size:1.2em;font-weight:700;margin:4px 0 6px;word-break:break-all"><a href="${esc(u)}" target=_blank rel=noopener style="color:inherit">${esc(u)}</a></div><div class=mut style="font-size:.86em;margin-bottom:8px">${d}</div><div class=pa>${B('Copier le lien',"biCopy('"+esc(u)+"')",'o sm','clip')}${B('Partager',`lnkShare('${k}')`,'o sm','link')}${B('WhatsApp',`lnkWa('${k}')`,'o sm','chat')}${B('E-mail',`lnkMail('${k}')`,'o sm','file')}</div></div></div>`;
 return`<div class=card><h2>Lien d’accès au logiciel</h2><p class=mut style="margin:0">Ouvrez ce lien dans le navigateur d’un ordinateur, d’une tablette ou d’un téléphone, puis connectez-vous avec vos identifiants <b>Golden Boutique</b> (nom d’utilisateur ou e-mail). Le compte Google ou Gmail du navigateur n’intervient pas.</p>
 ${p?blk(p,'Depuis n’importe où (Internet)','Fonctionne en 4G ou depuis un autre Wi-Fi. Ce lien change à chaque démarrage du serveur.','p'):''}
@@ -1220,14 +1220,18 @@ ${w?blk(w,'Sur le même Wi-Fi que l’ordinateur principal','Le plus rapide quan
 ${!p&&!w?'<p class=mut>Le Mac n’est connecté à aucun réseau Wi-Fi. Connectez-le, puis relancez Demarrer-Boutique.command.</p>':''}
 ${!p?`<div class=note style="margin:14px 0 0;font-size:.88em"><b>Accès depuis l’extérieur (4G, autre ville) :</b> sur le Mac, installez une fois l’outil gratuit <b>cloudflared</b> (Terminal : <code>brew install cloudflared</code>), puis relancez Demarrer-Boutique. Un lien Internet sécurisé (https) apparaîtra ici automatiquement.</div>`:''}
 ${loc?'<p class=mut style="font-size:.86em;margin-bottom:0">Sur ce Mac : http://localhost:8090</p>':''}</div>`}
-function biCard(){const sv=BI.mode=='server';return`<div class=card><h2>Sauvegarde des données</h2><p class=mut style=\"margin-top:0\">${sv?'Les données sont enregistrées sur le serveur (le Mac qui fait tourner PocketBase) et partagées par tous les appareils du réseau.':'Les données sont enregistrées dans ce navigateur uniquement. Téléchargez une sauvegarde pour les garder en sécurité ou les transférer sur le serveur.'}</p><div class=pa>${B('Télécharger une sauvegarde','biExport()','b','dl')}${B('Restaurer une sauvegarde','biPick()','o','sync')}</div><p class=mut style=\"margin-bottom:0\">Restaurer remplace toutes les données actuelles par celles du fichier.</p></div>`}
+function ghNetCard(){const A=isAdm(cur()),c=BI.gh.cfg,u=ghInvite(),err=BI.ghErr==401?'<div class=note style="border-color:var(--red)">La clé GitHub est refusée : créez-en une nouvelle et reliez à nouveau.</div>':'';
+return`<div class=card><h2>Lien d’accès au logiciel</h2><p class=mut style="margin:0">Les données sont enregistrées dans votre dépôt GitHub privé <b>${esc(c.o)}/${esc(c.r)}</b>. Le lien fonctionne partout : Wi-Fi ou 4G, téléphone ou ordinateur.</p>${err}
+${A?`<div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin-top:12px"><div style="padding:6px;background:#fff;border-radius:10px;border:1px solid var(--line,#ddd)">${biQrSvg(u)}</div><div style="flex:1;min-width:200px"><div class=mut style="font-size:.88em">Lien d’invitation pour les employés (à ouvrir une fois sur chaque appareil)</div><div style="font-size:.95em;font-weight:700;margin:4px 0 6px;word-break:break-all">${esc(u.slice(0,u.indexOf('#gb=')+12))}…</div><div class=mut style="font-size:.86em;margin-bottom:8px">Ce lien contient la clé d’accès aux données : envoyez-le uniquement à vos employés, en message privé.</div><div class=pa>${B('Copier le lien',"biCopy(ghInvite())",'o sm','clip')}${B('Partager',"lnkShare('p')",'o sm','link')}${B('WhatsApp',"lnkWa('p')",'o sm','chat')}${B('E-mail',"lnkMail('p')",'o sm','file')}</div></div></div>`:'<p class=mut>Pour inviter un autre employé, demandez le lien à l’administrateur.</p>'}
+<div class=pa style="margin-top:12px">${A?B('Changer la clé ou le dépôt','ghSetup()','o sm','gear'):''}${B('Déconnecter cet appareil','ghForget()','o sm','out')}</div></div>`}
+function biCard(){const sv=BI.mode=='server';return`<div class=card><h2>Sauvegarde des données</h2><p class=mut style=\"margin-top:0\">${BI.gh?'Les données sont enregistrées dans votre dépôt GitHub privé <b>'+esc(BI.gh.cfg.o+'/'+BI.gh.cfg.r)+'</b> et partagées par tous les appareils. Chaque modification y est conservée : l’historique du dépôt permet de retrouver n’importe quelle version passée.':sv?'Les données sont enregistrées sur le serveur (le Mac qui fait tourner PocketBase) et partagées par tous les appareils du réseau.':'Les données sont enregistrées dans ce navigateur uniquement. Téléchargez une sauvegarde pour les garder en sécurité ou les transférer sur le serveur.'}</p><div class=pa>${B('Télécharger une sauvegarde','biExport()','b','dl')}${B('Restaurer une sauvegarde','biPick()','o','sync')}</div><p class=mut style=\"margin-bottom:0\">Restaurer remplace toutes les données actuelles par celles du fichier.</p></div>`}
 function biExport(){const data={};if(BI.mode=='server'){for(const k in BI.C){if(k.startsWith('bi_d.')||/^bi_(pr\.|sn)/.test(k))continue;try{data[k]=JSON.parse(BI.C[k])}catch(e){}}data.bi_d=lsg('bi_d',{})}else{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(/^bi_/.test(k)&&k!='bi_th_last'&&!/^bi_(pr\.|sn)/.test(k)){try{data[k]=JSON.parse(localStorage.getItem(k))}catch(e){}}}}
 biDl(new Blob([JSON.stringify({app:'Golden Boutique',version:1,date:new Date().toISOString(),data})],{type:'application/json'}),'golden-boutique-sauvegarde-'+TODAY+'.json');log('sauvegarde téléchargée');toast('Sauvegarde téléchargée.')}
 let biImp=null;
 function biPick(){const i=document.createElement('input');i.type='file';i.accept='.json,application/json';i.onchange=()=>{const fl=i.files[0];if(!fl)return;const r=new FileReader();r.onload=()=>{try{const o=JSON.parse(r.result),d=o&&o.data?o.data:o;if(!d||!(d.bi_u2||d.bi_u||d.bi_d))throw 0;biImp=d;const n=d.bi_u2?d.bi_u2.length:(d.bi_u||[]).length;confirmBox('Restaurer cette sauvegarde ?',`Fichier <b>${esc(fl.name)}</b>${o.date?' du '+esc(dy(o.date.slice(0,10))):''}, ${n} compte${n>1?'s':''}. Toutes les données actuelles seront remplacées par celles du fichier.`,'biDoImport()','Restaurer')}catch(e){toast('Ce fichier n’est pas une sauvegarde de Golden Boutique.')}};r.readAsText(fl)};i.click()}
 async function biDoImport(){const d=biImp;if(!d)return;toast('Restauration en cours…');try{for(const k in d){if(!/^bi_/.test(k)||k=='bi_th_last')continue;if(k=='bi_d'&&BI.mode=='server'){for(const x in d.bi_d)biSet('bi_d.'+x,JSON.stringify(d.bi_d[x]))}else biSet(k,JSON.stringify(d[k]))}await biFlushNow();try{sessionStorage.removeItem('bi_s')}catch(e){}location.reload()}catch(e){toast('Restauration impossible : le serveur ne répond pas. Réessayez.')}}
 
-const lnkMsg=u=>'Bonjour, voici le lien pour vous connecter à '+BN()+' (même Wi-Fi que la boutique) : '+u+' . Utilisez le nom d’utilisateur et le mot de passe fournis par l’administrateur.';
+const lnkMsg=u=>'Bonjour, voici le lien pour vous connecter à '+BN()+(BI.gh?' (ouvrez-le dans Chrome ou Safari, fonctionne en Wi-Fi et en 4G)':' (même Wi-Fi que la boutique)')+' : '+u+' . Utilisez le nom d’utilisateur et le mot de passe fournis par l’administrateur.';
 async function lnkShare(k){const u=lnkU(k);if(!u)return;try{if(navigator.share){await navigator.share({title:BN(),text:lnkMsg(u),url:u});return}}catch(e){if(e&&e.name=='AbortError')return}biCopy(u)}
 function lnkWa(k){const u=lnkU(k);if(u)window.open('https://wa.me/?text='+encodeURIComponent(lnkMsg(u)),'_blank')}
 function lnkMail(k){const u=lnkU(k);if(u)location.href='mailto:?subject='+encodeURIComponent('Accès à '+BN())+'&body='+encodeURIComponent(lnkMsg(u))}
@@ -1247,9 +1251,9 @@ const u=cur();if(u&&!u.off){loadTh();(u.must||!u.email||!u.q)?first():show(home(
 const BI_API='/api/collections/kv/records';
 const BI={mode:'local',C:{},SRV:{},dirty:new Set(),busy:0,again:0,fresh:0,polling:0,ok:1,err:'',lastOk:(()=>{try{return+localStorage.getItem('bi_lastok')||0}catch(e){return 0}})()};
 function biOk(){BI.lastOk=Date.now();BI.err='';try{localStorage.setItem('bi_lastok',String(BI.lastOk))}catch(e){}}
-const biLocalOnly=k=>BI.mode!='server'||k=='bi_th_last';
+const biLocalOnly=k=>BI.mode!='server'||k=='bi_th_last'||(!!BI.gh&&ghLocalOnly(k));
 function biGet(k){if(biLocalOnly(k)){try{return localStorage.getItem(k)}catch(e){return null}}return k in BI.C?BI.C[k]:null}
-function biSet(k,s){if(biLocalOnly(k)){try{localStorage.setItem(k,s);if(k!='bi_th_last')biOk()}catch(e){BI.err='quota'}return}if(BI.C[k]===s)return;BI.C[k]=s;BI.dirty.add(k);clearTimeout(biSet.t);biSet.t=setTimeout(biFlush,400)}
+function biSet(k,s){if(biLocalOnly(k)){try{localStorage.setItem(k,s);if(k!='bi_th_last')biOk()}catch(e){BI.err='quota'}return}if(BI.C[k]===s)return;BI.C[k]=s;BI.dirty.add(k);clearTimeout(biSet.t);biSet.t=setTimeout(biFlush,BI.gh?2500:400)}
 function biDl(blob,fn){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
 async function biReq(method,url,body){const r=await fetch(url,{method,headers:body?{'Content-Type':'application/json'}:{},body,cache:'no-store'});if(!r.ok){const e=new Error('HTTP '+r.status);e.status=r.status;throw e}return r.status==204?null:r.json()}
 const biQ=k=>BI_API+'?perPage=1&skipTotal=1&filter='+encodeURIComponent('k="'+k+'"');
@@ -1266,11 +1270,13 @@ if(cur){const rs=JSON.stringify(cur.v);if(rs!==s&&(!base||rs!==base.s))out=biMer
 else{try{r=await biReq('POST',BI_API,JSON.stringify({k,v:JSON.parse(out)}))}catch(e){const c2=e.status==400?await biOne(k):null;if(!c2)throw e;out=biMerge(k,null,out,JSON.stringify(c2.v));r=await biReq('PATCH',BI_API+'/'+c2.id,JSON.stringify({k,v:JSON.parse(out)}))}}
 BI.SRV[k]={id:r.id,up:r.updated,s:out};
 if(out!==s){if(BI.C[k]===s)BI.C[k]=out;else{BI.C[k]=biMerge(k,s,BI.C[k],out);BI.dirty.add(k)}if(typeof applyRemote=='function')applyRemote([k])}}
-async function biFlush(){if(BI.busy){BI.again=1;return}BI.busy=1;let ok=1;
+function biFlush(){return BI.gh?ghFlush():biFlushPB()}
+async function biFlushPB(){if(BI.busy){BI.again=1;return}BI.busy=1;let ok=1;
 try{for(const k of [...BI.dirty]){const s=BI.C[k];BI.dirty.delete(k);try{await biPush(k,s)}catch(e){BI.dirty.add(k);throw e}}}catch(e){ok=0;setTimeout(biFlush,5000)}
 finally{BI.busy=0;BI.ok=ok;if(ok)biOk();else BI.err='net';biNet(ok)}if(ok&&(BI.again||BI.dirty.size)){BI.again=0;if(BI.dirty.size)return biFlush()}}
 async function biFlushNow(){const t=Date.now();while(BI.dirty.size||BI.busy){if(Date.now()-t>20000)throw new Error('timeout');if(!BI.busy)await biFlush();if(BI.dirty.size||BI.busy)await new Promise(r=>setTimeout(r,250))}}
-async function biPoll(){if(BI.mode!='server'||document.hidden||BI.polling||BI.busy)return;BI.polling=1;let ok=1;
+function biPoll(){return BI.gh?ghPoll():biPollPB()}
+async function biPollPB(){if(BI.mode!='server'||document.hidden||BI.polling||BI.busy)return;BI.polling=1;let ok=1;
 try{const meta=await biList('id,k,updated'),changed=[];
 for(const it of meta){const b=BI.SRV[it.k];if(b&&it.updated!==undefined&&b.up===it.updated)continue;if(BI.dirty.has(it.k)||BI.busy)continue;
 const full=await biReq('GET',BI_API+'/'+it.id),rs=JSON.stringify(full.v);if(BI.dirty.has(full.k))continue;BI.SRV[full.k]={id:full.id,up:full.updated,s:rs};if(BI.C[full.k]!==rs){BI.C[full.k]=rs;changed.push(full.k)}}
@@ -2525,13 +2531,131 @@ module.exports = QRCode;
 
 return module.exports})();
 const C=M.index,L=M.QRErrorCorrectLevel;return t=>{const q=new C(-1,L.M);q.addData(t);q.make();const n=q.getModuleCount(),g=[];for(let r=0;r<n;r++){const row=[];for(let c=0;c<n;c++)row.push(q.isDark(r,c)?1:0);g.push(row)}return g}})();
-function biPubUrl(){const n=BI.net;return n&&n.pub?String(n.pub):(/^https:/.test(location.protocol)&&BI.mode=='server'?location.origin:'')}
-function biNetUrl(){const n=BI.net;if(n&&n.ip)return'http://'+n.ip+':'+(n.port||8090);if(BI.mode=='server'&&!/^(localhost|127\.|0\.0\.0\.0|\[::1\]$)/.test(location.hostname))return location.origin;return''}
+function biPubUrl(){if(BI.gh)return ghInvite();const n=BI.net;return n&&n.pub?String(n.pub):(/^https:/.test(location.protocol)&&BI.mode=='server'?location.origin:'')}
+function biNetUrl(){if(BI.gh)return'';const n=BI.net;if(n&&n.ip)return'http://'+n.ip+':'+(n.port||8090);if(BI.mode=='server'&&!/^(localhost|127\.|0\.0\.0\.0|\[::1\]$)/.test(location.hostname))return location.origin;return''}
 function biQrSvg(t){const g=biQR(t),n=g.length,m=3;let d='';g.forEach((row,y)=>row.forEach((v,x)=>{if(v)d+='M'+(x+m)+' '+(y+m)+'h1v1h-1z'}));return'<svg viewBox="0 0 '+(n+2*m)+' '+(n+2*m)+'" width="180" height="180" role="img" aria-label="QR code du lien" shape-rendering="crispEdges" style="display:block;border-radius:8px"><rect width="100%" height="100%" fill="#fff"/><path d="'+d+'" fill="#000"/></svg>'}
 function biCopy(t){const ok=()=>typeof toast=='function'&&toast('Lien copié.');if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(t).then(ok,()=>biCopy2(t,ok))}else biCopy2(t,ok)}
 function biCopy2(t,ok){const i=document.createElement('textarea');i.value=t;i.setAttribute('readonly','');i.style.position='fixed';i.style.opacity='0';document.body.appendChild(i);i.select();try{document.execCommand('copy');ok()}catch(e){}i.remove()}
 function biRun(){const s=document.createElement('script');s.textContent=document.getElementById('app-src').textContent;document.body.appendChild(s)}
-(async()=>{if(!/^https?:$/.test(location.protocol)){BI.mode='local';return biRun()}
+// ================= Stockage : dépôt GitHub privé =================
+// Toutes les données sont enregistrées dans un dépôt GitHub privé (un fichier par rubrique, dossier « donnees/ »).
+// Chaque enregistrement est un commit : l'historique complet reste disponible sur GitHub.
+const GH_DIR='donnees/',GH_SITE=o=>'https://'+String(o||'').toLowerCase()+'.github.io/Golden-Boutique/';
+const ghPath=k=>GH_DIR+k.replace(/[^A-Za-z0-9._-]/g,c=>'~'+c.charCodeAt(0).toString(16)+'~')+'.json';
+const ghKey=p=>p.slice(GH_DIR.length,-5).replace(/~([0-9a-f]+)~/g,(m,h)=>String.fromCharCode(parseInt(h,16)));
+const b64u=s=>btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const ub64u=s=>decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/'))));
+function ghCfgRead(){
+  try{const m=location.hash.match(/[#&]gb=([A-Za-z0-9_-]+)/);if(m){const c=JSON.parse(ub64u(m[1]));if(c&&c.o&&c.r&&c.t){try{localStorage.setItem('gb_gh',JSON.stringify(c))}catch(e){}}try{history.replaceState(null,'',location.pathname+location.search)}catch(e){location.hash=''}return c}}catch(e){}
+  try{return JSON.parse(localStorage.getItem('gb_gh')||'null')}catch(e){return null}}
+const ghApi=()=>(BI.gh.cfg.a||(()=>{try{return localStorage.getItem('gb_gh_api')}catch(e){return''}})()||'https://api.github.com').replace(/\/$/,'');
+async function ghReq(method,path,body,etag){
+  const c=BI.gh.cfg,h={Authorization:'Bearer '+c.t,Accept:'application/vnd.github+json'};
+  if(body)h['Content-Type']='application/json';if(etag)h['If-None-Match']=etag;
+  const r=await fetch(ghApi()+path,{method,headers:h,body:body?JSON.stringify(body):undefined,cache:'no-store'});
+  if(r.status==304)return{nm:1};
+  if(!r.ok){const e=new Error('GitHub '+r.status);e.status=r.status;try{e.body=await r.json()}catch(x){}throw e}
+  return{j:r.status==204?null:await r.json(),etag:r.headers.get('ETag')}}
+const ghRepo=()=>'/repos/'+encodeURIComponent(BI.gh.cfg.o)+'/'+encodeURIComponent(BI.gh.cfg.r);
+function ghDec(b64){const bin=atob(String(b64).replace(/\s/g,'')),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return new TextDecoder('utf-8').decode(u)}
+async function ghBlob(sha){return ghDec((await ghReq('GET',ghRepo()+'/git/blobs/'+sha)).j.content)}
+async function ghPool(list,fn,n=6){const out=[];let i=0;await Promise.all(Array.from({length:Math.min(n,list.length)},async()=>{while(i<list.length){const j=i++;out[j]=await fn(list[j])}}));return out}
+// Carte « fichier → empreinte » de la version actuelle du dépôt
+async function ghState(){
+  const b=BI.gh.cfg.b||'main';let ref;
+  try{ref=await ghReq('GET',ghRepo()+'/git/ref/heads/'+encodeURIComponent(b))}catch(e){if(e.status==404||e.status==409)return null;throw e}
+  const head=ref.j.object.sha,cm=await ghReq('GET',ghRepo()+'/git/commits/'+head),tr=await ghReq('GET',ghRepo()+'/git/trees/'+cm.j.tree.sha+'?recursive=1'),map={};
+  (tr.j.tree||[]).forEach(e=>{if(e.type=='blob'&&e.path.startsWith(GH_DIR)&&e.path.endsWith('.json'))map[e.path]=e.sha});
+  return{head,tree:cm.j.tree.sha,map,etag:ref.etag}}
+// Dépôt tout neuf (sans aucun fichier) : on crée le premier fichier pour pouvoir y écrire ensuite
+async function ghInitRepo(){
+  await ghReq('PUT',ghRepo()+'/contents/LISEZ-MOI.md',{message:'Golden Boutique : création du dépôt des données',content:btoa(unescape(encodeURIComponent('# Données Golden Boutique\n\nNe modifiez pas ce dépôt à la main : il est rempli automatiquement par le logiciel.\nChaque enregistrement du logiciel est un commit ; l’historique permet de retrouver toute version passée.\n')))});
+  return ghState()}
+const ghLocalOnly=k=>k=='bi_th_last'||/^bi_(pr\.|sn|lastok)/.test(k);
+async function ghLoadAll(){
+  const info=(await ghReq('GET',ghRepo())).j;
+  if(info.permissions&&info.permissions.push===false){const e=new Error('lecture seule');e.status=403;throw e}
+  BI.gh.cfg.b=BI.gh.cfg.b||info.default_branch||'main';
+  let st=await ghState();if(!st)st=await ghInitRepo();if(!st){const e=new Error('branche');e.status=404;throw e}
+  const paths=Object.keys(st.map);
+  const txt=await ghPool(paths,p=>ghBlob(st.map[p]));
+  paths.forEach((p,i)=>{const k=ghKey(p);BI.C[k]=txt[i];BI.SRV[k]={id:st.map[p],s:txt[i]}});
+  BI.gh.head=st.head;BI.gh.etag=st.etag;BI.gh.map=st.map;
+  // Premier branchement par l'administrateur : le dépôt est vide → on y envoie les données de cet appareil
+  if(!paths.length&&BI.gh.cfg.seed){
+    try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!/^bi_/.test(k)||ghLocalOnly(k))continue;const raw=localStorage.getItem(k);if(raw==null)continue;
+      if(k=='bi_d'){try{const v=JSON.parse(raw);for(const x in v){BI.C['bi_d.'+x]=JSON.stringify(v[x]);BI.dirty.add('bi_d.'+x)}}catch(e){}}else{BI.C[k]=raw;BI.dirty.add(k)}}}catch(e){}
+  }
+  if(BI.gh.cfg.seed){delete BI.gh.cfg.seed;try{localStorage.setItem('gb_gh',JSON.stringify(BI.gh.cfg))}catch(e){}}}
+async function ghFlush(){
+  if(BI.busy){BI.again=1;return}if(!BI.dirty.size)return;BI.busy=1;let ok=1;
+  const keys=[...BI.dirty],vals={};keys.forEach(k=>{vals[k]=BI.C[k];BI.dirty.delete(k)});
+  try{
+    for(let essai=0;;essai++){
+      const st=await ghState();if(!st)throw Object.assign(new Error('branche'),{status:404});
+      const outs={},remote=[];
+      for(const k of keys){const p=ghPath(k),rs=st.map[p],base=BI.SRV[k];
+        if(rs&&(!base||base.id!==rs))remote.push(k);else outs[k]=vals[k]}
+      const rtx=await ghPool(remote,k=>ghBlob(st.map[ghPath(k)]));
+      remote.forEach((k,i)=>{const base=BI.SRV[k];outs[k]=biMerge(k,base?base.s:null,vals[k],rtx[i])});
+      const changed=keys.filter(k=>{const rs=st.map[ghPath(k)],base=BI.SRV[k];return!(rs&&base&&base.id===rs&&base.s===outs[k])});
+      if(!changed.length){BI.gh.head=st.head;break}
+      const tree=await ghReq('POST',ghRepo()+'/git/trees',{base_tree:st.tree,tree:changed.map(k=>({path:ghPath(k),mode:'100644',type:'blob',content:outs[k]}))});
+      const u=typeof cur=='function'&&cur(),qui=u?(u.nm||u.u):'système';
+      const cmt=await ghReq('POST',ghRepo()+'/git/commits',{message:'Golden Boutique · '+qui+' · '+changed.map(k=>k.replace(/^bi_(d\.)?/,'')).slice(0,6).join(', ')+(changed.length>6?'…':''),tree:tree.j.sha,parents:[st.head]});
+      try{await ghReq('PATCH',ghRepo()+'/git/refs/heads/'+encodeURIComponent(BI.gh.cfg.b),{sha:cmt.j.sha,force:false})}
+      catch(e){if((e.status==422||e.status==409)&&essai<6){await new Promise(r=>setTimeout(r,400+Math.random()*1200));continue}throw e}
+      const nt=await ghReq('GET',ghRepo()+'/git/trees/'+tree.j.sha+'?recursive=1'),map={};
+      (nt.j.tree||[]).forEach(e=>{if(e.type=='blob'&&e.path.startsWith(GH_DIR))map[e.path]=e.sha});
+      BI.gh.head=cmt.j.sha;BI.gh.map=map;BI.gh.etag=null;
+      const upd=[];
+      keys.forEach(k=>{const out=outs[k];BI.SRV[k]={id:map[ghPath(k)],s:out};
+        if(out!==vals[k]){if(BI.C[k]===vals[k]){BI.C[k]=out;upd.push(k)}else{BI.C[k]=biMerge(k,vals[k],BI.C[k],out);BI.dirty.add(k)}}});
+      if(upd.length&&typeof applyRemote=='function')applyRemote(upd);
+      break}
+  }catch(e){ok=0;keys.forEach(k=>{if(!BI.dirty.has(k)&&BI.C[k]===vals[k])BI.dirty.add(k)});BI.ghErr=e.status||0;setTimeout(biFlush,e.status==403||e.status==429?60000:8000)}
+  finally{BI.busy=0;BI.ok=ok;if(ok){biOk();BI.ghErr=0}else BI.err='net';biNet(ok)}
+  if(ok&&(BI.again||BI.dirty.size)){BI.again=0;if(BI.dirty.size)setTimeout(biFlush,1500)}}
+async function ghPoll(){
+  if(document.hidden||BI.polling||BI.busy)return;if(Date.now()-(ghPoll.t||0)<8000)return;ghPoll.t=Date.now();BI.polling=1;let ok=1;
+  try{const b=BI.gh.cfg.b,ref=await ghReq('GET',ghRepo()+'/git/ref/heads/'+encodeURIComponent(b),null,BI.gh.etag);
+    if(ref.nm||ref.j.object.sha===BI.gh.head){if(ref.etag)BI.gh.etag=ref.etag;return}
+    const st=await ghState();if(!st||BI.busy)return;const changed=[],todo=[];
+    for(const p in st.map){const k=ghKey(p),b0=BI.SRV[k];if(b0&&b0.id===st.map[p])continue;if(BI.dirty.has(k))continue;todo.push(p)}
+    const txt=await ghPool(todo,p=>ghBlob(st.map[p]));
+    todo.forEach((p,i)=>{const k=ghKey(p);if(BI.dirty.has(k))return;BI.SRV[k]={id:st.map[p],s:txt[i]};if(BI.C[k]!==txt[i]){BI.C[k]=txt[i];changed.push(k)}});
+    BI.gh.head=st.head;BI.gh.map=st.map;BI.gh.etag=st.etag;
+    if(changed.length&&typeof applyRemote=='function')applyRemote(changed);else if(typeof biRender=='function')biRender()}
+  catch(e){ok=0}finally{BI.polling=0;biNet(ok)}}
+function ghInvite(){if(!BI.gh)return'';const c=BI.gh.cfg,site=c.s||(/\.github\.io$/.test(location.hostname)?location.origin+location.pathname:GH_SITE(c.o));
+  return site+'#gb='+b64u(JSON.stringify({o:c.o,r:c.r,b:c.b,t:c.t,s:site,...(c.a?{a:c.a}:{})}))}
+function ghFatal(e){const s=e&&e.status,t=s==401?'La clé d’accès GitHub est refusée (expirée ou supprimée). L’administrateur doit créer une nouvelle clé et renvoyer le lien.':s==403?'La clé d’accès GitHub n’a pas le droit d’écrire dans le dépôt des données, ou GitHub limite temporairement les accès. Réessayez dans une minute.':s==404?'Dépôt des données introuvable. Vérifiez son nom, et que la clé d’accès a bien été créée pour ce dépôt.':'Impossible de joindre GitHub. Vérifiez la connexion Internet de cet appareil (Wi-Fi ou 4G), puis réessayez.';
+  document.getElementById('m').innerHTML='<div class=auth-box><div class=card><h2>Connexion aux données impossible</h2><p class=mut>'+t+'</p><div class=pa><button class=b onclick="location.reload()">Réessayer</button><button class=o onclick="ghSetup()">Relier à nouveau</button></div></div></div>';document.body.classList.add('auth')}
+function ghSetup(){const c=(()=>{try{return JSON.parse(localStorage.getItem('gb_gh')||'null')}catch(e){return null}})()||{},e=s=>String(s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+  document.getElementById('m').innerHTML=`<div class=auth-box><div class=card><h2>Relier aux données GitHub</h2>
+<p class=mut>Réservé à l’administrateur. <b>Employés :</b> n’utilisez pas cet écran, ouvrez simplement le lien d’invitation reçu.</p>
+<div class=col><label>Compte GitHub<input id=gho value="${e(c.o||'ralinaivo-spec')}" autocapitalize=off spellcheck=false></label>
+<label>Dépôt privé des données<input id=ghr value="${e(c.r||'Golden-Boutique-Donnees')}" autocapitalize=off spellcheck=false></label>
+<label>Clé d’accès GitHub (commence par github_pat_)<input id=ght type=password value="${e(c.t||'')}" autocapitalize=off autocomplete=off spellcheck=false></label></div>
+<label class=ck style="margin:10px 0 0"><input type=checkbox id=ghs checked> Si le dépôt est vide, y envoyer les comptes et les données de cet appareil</label>
+<p class=msg id=ghm role=alert></p><div class=pa><button class=b id=ghb onclick="ghSetupGo()">Tester et relier</button><button class=o onclick="location.reload()">Annuler</button></div></div></div>`;document.body.classList.add('auth')}
+async function ghSetupGo(){const m=t=>{document.getElementById('ghm').textContent=t},o=document.getElementById('gho').value.trim(),r=document.getElementById('ghr').value.trim(),t=document.getElementById('ght').value.trim();
+  if(!o||!r||!t)return m('Remplissez les trois champs.');document.getElementById('ghb').disabled=true;m('Vérification…');
+  const prev=BI.gh;BI.gh={cfg:{o,r,t}};
+  try{const info=(await ghReq('GET',ghRepo())).j;if(!info.private){BI.gh=prev;document.getElementById('ghb').disabled=false;return m('Ce dépôt est PUBLIC : tout le monde pourrait lire vos données. Rendez-le privé (Settings › Danger Zone › Change visibility) ou choisissez un dépôt privé.')}
+    if(info.permissions&&info.permissions.push===false){BI.gh=prev;document.getElementById('ghb').disabled=false;return m('Cette clé peut lire mais pas écrire : donnez-lui l’accès « Contents : Read and write ».')}
+    const cfg={o,r,t,b:info.default_branch||'main'};if(document.getElementById('ghs').checked)cfg.seed=1;
+    localStorage.setItem('gb_gh',JSON.stringify(cfg));location.reload()}
+  catch(e){BI.gh=prev;document.getElementById('ghb').disabled=false;m(e.status==401?'Clé refusée : vérifiez que vous l’avez copiée en entier.':e.status==404?'Dépôt introuvable avec cette clé : vérifiez le nom du compte, du dépôt, et que la clé a accès à ce dépôt.':'GitHub ne répond pas : vérifiez la connexion Internet.')}}
+function ghForget(){confirmBox('Déconnecter cet appareil ?','Cet appareil ne sera plus relié aux données GitHub. Les données restent en sécurité sur GitHub. Pour le relier à nouveau, ouvrez le lien d’invitation.','ghForgetGo()','Déconnecter')}
+function ghForgetGo(){try{localStorage.removeItem('gb_gh');sessionStorage.removeItem('bi_s');localStorage.removeItem('gb_keep')}catch(e){}location.href=location.pathname}
+(async()=>{const ghc=ghCfgRead();
+if(ghc&&ghc.o&&ghc.r&&ghc.t){BI.mode='server';BI.gh={cfg:ghc,map:{},head:null,etag:null};
+  try{await ghLoadAll()}catch(e){return ghFatal(e)}
+  BI.fresh=!('bi_u2' in BI.C)&&!('bi_u' in BI.C);biRun();if(BI.dirty.size)setTimeout(biFlush,1500);
+  setInterval(biPoll,4000);document.addEventListener('visibilitychange',()=>{if(!document.hidden){ghPoll.t=0;biPoll()}});
+  addEventListener('beforeunload',e=>{if(BI.dirty.size||BI.busy){e.preventDefault();e.returnValue=''}});return}
+if(!/^https?:$/.test(location.protocol)||/\.github\.io$/.test(location.hostname)){BI.mode='local';return biRun()}
 BI.mode='server';
 try{const r=await fetch('/reseau.json',{cache:'no-store'});if(r.ok)BI.net=await r.json()}catch(e){}
 try{const items=await biList();for(const it of items){const s=JSON.stringify(it.v);BI.C[it.k]=s;BI.SRV[it.k]={id:it.id,up:it.updated,s}}}
