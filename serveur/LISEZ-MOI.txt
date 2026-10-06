@@ -34,6 +34,11 @@ NE PAS SUPPRIMER
    Le dossier « pb_data » : il contient TOUTES les données de la boutique.
    Faites aussi des sauvegardes depuis Paramètres › Sauvegarde.
 
+REPRENDRE LES DONNÉES DU FICHIER « MODE LOCAL »
+   Si vous aviez déjà saisi des employés ou des produits en ouvrant index.html directement :
+   1. Ouvrez cet ancien fichier, connectez-vous, puis Paramètres › Télécharger une sauvegarde.
+   2. Sur le serveur neuf (http://localhost:8090), écran de connexion › « Importer une sauvegarde ».
+
 METTRE À JOUR LE LOGICIEL
-   Remplacez seulement le fichier « pb_public/index.html » par la nouvelle version,
-   puis rechargez la page. Les données ne sont pas touchées.
+   Remplacez le fichier « index.html » de ce dossier par la nouvelle version,
+   puis relancez Demarrer-Boutique. Les données ne sont pas touchées.

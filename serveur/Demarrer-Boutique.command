@@ -37,9 +37,12 @@ if [ ! -x "$DIR/pocketbase" ]; then
   echo "  Serveur installé."
 fi
 
-# Copie le logiciel dans pb_public s'il est à côté (dépôt GitHub téléchargé en entier).
+# Copie le logiciel dans pb_public à chaque démarrage : celui posé à côté de ce fichier,
+# sinon celui du dossier parent (dépôt GitHub téléchargé en entier). Mettre à jour = remplacer index.html.
 mkdir -p "$DIR/pb_public"
-if [ ! -f "$DIR/pb_public/index.html" ] && [ -f "$DIR/../index.html" ]; then
+if [ -f "$DIR/index.html" ]; then
+  cp "$DIR/index.html" "$DIR/pb_public/index.html"
+elif [ -f "$DIR/../index.html" ]; then
   cp "$DIR/../index.html" "$DIR/pb_public/index.html"
 fi
 if [ ! -f "$DIR/pb_public/index.html" ]; then
