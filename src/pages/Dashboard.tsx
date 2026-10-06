@@ -1,5 +1,5 @@
 // Accueil : résumé adapté au rôle. Les chiffres de vente arriveront avec les étapes suivantes.
-import { roleOf, SUPERADMIN_ID, useCan, useCurrentUser, type User } from '../lib/auth';
+import { managesOwnPassword, roleOf, SUPERADMIN_ID, useCan, useCurrentUser, type User } from '../lib/auth';
 import { useMeta, useTable } from '../lib/db';
 import { DEFAULT_COMPANY, useCompany } from '../lib/settings';
 import { useSyncStatus } from '../lib/sync';
@@ -32,7 +32,7 @@ export function DashboardPage() {
   return (
     <>
       <PageHead title={`${hello}, ${me.fullName.split(' ')[0]}`} subtitle={<span style={{ textTransform: 'capitalize' }}>{today}</span>} />
-      {(me.mustChangePassword || !me.secretAnswerHash) && (
+      {managesOwnPassword(me) && (me.mustChangePassword || !me.secretAnswerHash) && (
         <div className="notice">
           <Icon name="key" />
           <span>
@@ -48,7 +48,7 @@ export function DashboardPage() {
           <a className="card stat" href="#/utilisateurs" style={{ textDecoration: 'none', color: 'inherit' }}>
             <span className="muted small">Comptes actifs dans l'équipe</span>
             <span className="stat-value">{team.length}</span>
-            <span className="small muted">{users.filter((u) => u.mustChangePassword && u.active && u.id !== SUPERADMIN_ID).length} en attente de première connexion</span>
+            <span className="small muted">Mots de passe donnés par vous</span>
           </a>
         )}
         <div className="card stat">

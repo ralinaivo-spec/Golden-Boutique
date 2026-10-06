@@ -85,6 +85,11 @@ export function useCurrentUser(): User | undefined {
 export function roleOf(user?: User): Role | undefined {
   return user ? get<Role>('roles', user.roleId) : undefined;
 }
+/** Seuls le super-admin et le gérant gèrent leur propre mot de passe ; les autres reçoivent le leur du gérant. */
+export function managesOwnPassword(user?: User): boolean {
+  return !!user && (user.roleId === SUPERADMIN_ROLE || user.roleId === 'role-admin');
+}
+
 export function can(user: User | undefined, perm: string): boolean {
   if (!user) return false;
   if (user.roleId === SUPERADMIN_ROLE) return true;

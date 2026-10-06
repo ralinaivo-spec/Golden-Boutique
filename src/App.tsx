@@ -1,6 +1,6 @@
 // Structure de l'application : démarrage, accès, menu adapté au rôle, pages.
 import { useEffect, useState, type ReactNode } from 'react';
-import { roleOf, useCan, useCurrentUser, logout } from './lib/auth';
+import { managesOwnPassword, roleOf, useCan, useCurrentUser, logout } from './lib/auth';
 import { getMeta, setMeta, useMeta } from './lib/db';
 import { useApplyAppearance, useCompany } from './lib/settings';
 import { syncNow, useSyncStatus } from './lib/sync';
@@ -57,7 +57,7 @@ export function App() {
   let screen: ReactNode;
   if (!user) screen = <LoginScreen />;
   else if (locked) screen = <LockScreen user={user} onUnlock={() => setLocked(false)} />;
-  else if ((user.mustChangePassword || !user.secretAnswerHash) && !setupSkipped) screen = <FirstSetupScreen user={user} />;
+  else if (managesOwnPassword(user) && (user.mustChangePassword || !user.secretAnswerHash) && !setupSkipped) screen = <FirstSetupScreen user={user} />;
   else screen = <Shell />;
 
   return (

@@ -61,7 +61,7 @@ export function UsersPage() {
                     <span className="list-item-title">{u.fullName}</span>
                     {u.id === me.id && <Badge tone="brand">Vous</Badge>}
                     {!u.active && <Badge tone="danger">Désactivé</Badge>}
-                    {u.mustChangePassword && u.active && <Badge tone="warn">Mot de passe provisoire</Badge>}
+                    {u.mustChangePassword && u.active && u.roleId === SUPERADMIN_ROLE && <Badge tone="warn">Mot de passe d'origine</Badge>}
                   </div>
                   <p className="small muted">{u.username} · {roleOf(u)?.name ?? 'Rôle inconnu'}{u.phone ? ` · ${u.phone}` : ''}</p>
                 </div>
@@ -81,11 +81,11 @@ export function UsersPage() {
         onClose={() => setEditing(null)} onCreated={(user, pwd) => setShownPwd({ user, pwd })} />}
 
       {resetFor && <Confirm title="Nouveau mot de passe" confirmLabel="Générer"
-        message={<p>Un mot de passe provisoire va être créé pour <strong>{resetFor.fullName}</strong>. Il devra le changer à sa prochaine connexion.</p>}
+        message={<p>Un nouveau mot de passe va être créé pour <strong>{resetFor.fullName}</strong>. L'ancien ne fonctionnera plus.</p>}
         onClose={() => setResetFor(null)}
         onConfirm={async () => {
           const pwd = tempPassword();
-          await setPassword(resetFor.id, pwd, { mustChange: true, reason: `Réinitialisé par ${me.fullName}` });
+          await setPassword(resetFor.id, pwd, { mustChange: false, reason: `Réinitialisé par ${me.fullName}` });
           setShownPwd({ user: resetFor, pwd });
         }} />}
 
@@ -119,7 +119,6 @@ function UserForm({ user, me, roles, users, onClose, onCreated }: { user: User |
   // Mot de passe : visible et modifiable uniquement par le super-admin et le gérant.
   const canSetPwd = me.roleId === SUPERADMIN_ROLE || me.roleId === ADMIN_ROLE;
   const [pwd, setPwd] = useState(user ? '' : tempPassword());
-  const [mustChange, setMustChange] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const isSelf = user?.id === me.id;
@@ -143,14 +142,14 @@ function UserForm({ user, me, roles, users, onClose, onCreated }: { user: User |
       if (user) {
         await save('users', { id: user.id, ...data });
         if (canSetPwd && pwd) {
-          await setPassword(user.id, pwd, { mustChange: isSelf ? false : mustChange, reason: `Modifié par ${me.fullName}` });
+          await setPassword(user.id, pwd, { mustChange: false, reason: `Modifié par ${me.fullName}` });
           onCreated({ ...user, ...data } as User, pwd);
         }
         await audit('Utilisateur modifié', `${data.fullName} (${roles.find((r) => r.id === roleId)?.name}${active ? '' : ', désactivé'})`, 'users', user.id);
         toast('Modifications enregistrées');
       } else {
         const finalPwd = canSetPwd ? pwd : tempPassword();
-        const [created] = await save('users', { ...data, passwordHash: await hashSecret(finalPwd), mustChangePassword: canSetPwd ? mustChange : true });
+        const [created] = await save('users', { ...data, passwordHash: await hashSecret(finalPwd), mustChangePassword: false });
         await audit('Utilisateur créé', `${data.fullName} — ${roles.find((r) => r.id === roleId)?.name}`, 'users', created.id);
         onCreated(created as User, finalPwd);
       }
@@ -177,7 +176,7 @@ function UserForm({ user, me, roles, users, onClose, onCreated }: { user: User |
               </div>
               <Button variant="ghost" type="button" icon="refresh" onClick={() => setPwd(tempPassword())}>Générer</Button>
             </div>
-            {!isSelf && (!user || pwd) && <Toggle checked={mustChange} onChange={setMustChange} label="L'utilisateur devra le changer à sa prochaine connexion" />}
+            <p className="small muted">{isSelf ? 'Votre nouveau mot de passe.' : 'C’est ce mot de passe que la personne utilisera pour se connecter. Elle ne peut pas le changer elle-même.'}</p>
           </div>
         ) : (!user && <div className="notice"><Icon name="key" /><span>Un mot de passe provisoire sera créé et affiché après l'enregistrement.</span></div>)}
         {error && <div className="notice notice-danger"><Icon name="alert" /><span>{error}</span></div>}

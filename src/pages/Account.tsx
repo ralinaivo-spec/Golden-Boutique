@@ -1,6 +1,6 @@
 // Mon compte : mot de passe, question secrète, thème, déconnexion.
 import { useState } from 'react';
-import { checkPasswordStrength, logout, roleOf, SECRET_QUESTIONS, setPassword, setSecretQuestion, audit, useCurrentUser } from '../lib/auth';
+import { checkPasswordStrength, logout, managesOwnPassword, roleOf, SECRET_QUESTIONS, setPassword, setSecretQuestion, audit, useCurrentUser } from '../lib/auth';
 import { verifySecret } from '../lib/crypto';
 import { PERMISSIONS, SUPERADMIN_ROLE } from '../lib/permissions';
 import { Badge, Button, PageHead, PasswordField, SelectField, TextField, toast } from '../ui/kit';
@@ -16,8 +16,17 @@ export function AccountPage() {
       <PageHead title="Mon compte" subtitle={`${me.fullName} · ${me.username}`} actions={<Button variant="ghost" icon="logout" onClick={() => logout()}>Se déconnecter</Button>} />
       <div className="grid-2" style={{ alignItems: 'start' }}>
         <div className="stack">
-          <PasswordCard />
-          <SecretCard />
+          {managesOwnPassword(me) ? (
+            <>
+              <PasswordCard />
+              <SecretCard />
+            </>
+          ) : (
+            <div className="card stack-s">
+              <h3>Mot de passe</h3>
+              <p className="muted">Votre mot de passe est donné par le gérant. Pour le changer ou si vous l'avez oublié, adressez-vous à lui.</p>
+            </div>
+          )}
         </div>
         <div className="stack">
           <div className="card stack">

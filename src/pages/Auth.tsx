@@ -1,6 +1,6 @@
 // Écrans d'accès : connexion, première connexion, mot de passe oublié, verrouillage.
 import { useState, type ReactNode } from 'react';
-import { checkPasswordStrength, checkSecretAnswer, findUser, login, logout, roleOf, SECRET_QUESTIONS, setPassword, setSecretQuestion, audit, type User } from '../lib/auth';
+import { checkPasswordStrength, checkSecretAnswer, findUser, managesOwnPassword, login, logout, roleOf, SECRET_QUESTIONS, setPassword, setSecretQuestion, audit, type User } from '../lib/auth';
 import { save, setMeta } from '../lib/db';
 import { useCompany } from '../lib/settings';
 import { connectCloud } from '../lib/sync';
@@ -93,6 +93,7 @@ function ForgotScreen({ onBack }: { onBack: () => void }) {
           e.preventDefault();
           const u = findUser(username);
           if (!u) return setError("Ce nom d'utilisateur n'existe pas sur cet appareil.");
+          if (!managesOwnPassword(u)) return setError("Votre mot de passe est donné par le gérant : demandez-lui de vous le redonner.");
           if (!u.secretAnswerHash) return setError("Ce compte n'a pas de question secrète. Demandez à l'admin de réinitialiser votre mot de passe.");
           setError(null); setUser(u);
         }}>
