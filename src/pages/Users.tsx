@@ -3,8 +3,8 @@ import { useMemo, useState } from 'react';
 import { audit, normUsername, roleOf, setPassword, SUPERADMIN_ID, useCurrentUser, type Role, type User } from '../lib/auth';
 import { hashSecret } from '../lib/crypto';
 import { save, useTable } from '../lib/db';
-import { SUPERADMIN_ROLE } from '../lib/permissions';
-import { Badge, Button, Confirm, Empty, IconButton, Modal, PageHead, SelectField, TextField, Toggle, timeAgo, toast } from '../ui/kit';
+import { ADMIN_ROLE, SUPERADMIN_ROLE } from '../lib/permissions';
+import { Badge, Button, Confirm, Empty, IconButton, Modal, PageHead, PasswordField, SelectField, TextField, Toggle, timeAgo, toast } from '../ui/kit';
 import { Icon } from '../ui/icons';
 
 /** Mot de passe provisoire facile à dicter : 3 lettres + 4 chiffres. */
@@ -90,17 +90,17 @@ export function UsersPage() {
         }} />}
 
       {shownPwd && (
-        <Modal title="Mot de passe provisoire" onClose={() => setShownPwd(null)} footer={<Button onClick={() => setShownPwd(null)}>C'est noté</Button>}>
+        <Modal title="Identifiants du compte" onClose={() => setShownPwd(null)} footer={<Button onClick={() => setShownPwd(null)}>C'est noté</Button>}>
           <div className="stack">
             <p>Donnez ces informations à <strong>{shownPwd.user.fullName}</strong>. Le mot de passe ne sera plus affiché ensuite.</p>
             <div className="card" style={{ background: 'var(--surface-2)' }}>
               <p className="small muted">Nom d'utilisateur</p>
               <p className="num" style={{ fontSize: '1.4rem', fontWeight: 700 }}>{shownPwd.user.username}</p>
-              <p className="small muted" style={{ marginTop: 10 }}>Mot de passe provisoire</p>
+              <p className="small muted" style={{ marginTop: 10 }}>Mot de passe</p>
               <p className="num" style={{ fontSize: '1.8rem', fontWeight: 800, letterSpacing: '.06em' }}>{shownPwd.pwd}</p>
             </div>
             <Button variant="ghost" icon="check" onClick={() => {
-              navigator.clipboard?.writeText(`Identifiant : ${shownPwd.user.username}\nMot de passe provisoire : ${shownPwd.pwd}`).then(() => toast('Copié'));
+              navigator.clipboard?.writeText(`Identifiant : ${shownPwd.user.username}\nMot de passe : ${shownPwd.pwd}`).then(() => toast('Copié'));
             }}>Copier pour l'envoyer</Button>
           </div>
         </Modal>
@@ -116,6 +116,10 @@ function UserForm({ user, me, roles, users, onClose, onCreated }: { user: User |
   const [phone, setPhone] = useState(user?.phone ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
   const [active, setActive] = useState(user?.active ?? true);
+  // Mot de passe : visible et modifiable uniquement par le super-admin et le gérant.
+  const canSetPwd = me.roleId === SUPERADMIN_ROLE || me.roleId === ADMIN_ROLE;
+  const [pwd, setPwd] = useState(user ? '' : tempPassword());
+  const [mustChange, setMustChange] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const isSelf = user?.id === me.id;
@@ -131,18 +135,24 @@ function UserForm({ user, me, roles, users, onClose, onCreated }: { user: User |
     if (!fullName.trim()) return setError('Indiquez le nom complet.');
     if (!/^[a-z0-9._-]{3,}$/.test(uname)) return setError("Identifiant : au moins 3 caractères, sans espace ni accent (lettres, chiffres, . _ -).");
     if (users.some((u) => u.username === uname && u.id !== user?.id)) return setError('Cet identifiant est déjà utilisé.');
+    if (canSetPwd && (!user || pwd) && pwd.trim().length < 4) return setError('Le mot de passe doit avoir au moins 4 caractères.');
+    if (canSetPwd && pwd && pwd !== pwd.trim()) return setError('Le mot de passe ne doit pas commencer ni finir par un espace.');
     setBusy(true);
     try {
       const data = { fullName: fullName.trim(), username: uname, roleId, phone: phone.trim(), email: email.trim(), active };
       if (user) {
         await save('users', { id: user.id, ...data });
+        if (canSetPwd && pwd) {
+          await setPassword(user.id, pwd, { mustChange: isSelf ? false : mustChange, reason: `Modifié par ${me.fullName}` });
+          onCreated({ ...user, ...data } as User, pwd);
+        }
         await audit('Utilisateur modifié', `${data.fullName} (${roles.find((r) => r.id === roleId)?.name}${active ? '' : ', désactivé'})`, 'users', user.id);
         toast('Modifications enregistrées');
       } else {
-        const pwd = tempPassword();
-        const [created] = await save('users', { ...data, passwordHash: await hashSecret(pwd), mustChangePassword: true });
+        const finalPwd = canSetPwd ? pwd : tempPassword();
+        const [created] = await save('users', { ...data, passwordHash: await hashSecret(finalPwd), mustChangePassword: canSetPwd ? mustChange : true });
         await audit('Utilisateur créé', `${data.fullName} — ${roles.find((r) => r.id === roleId)?.name}`, 'users', created.id);
-        onCreated(created as User, pwd);
+        onCreated(created as User, finalPwd);
       }
       onClose();
     } catch (e: any) { setError(e.message); } finally { setBusy(false); }
@@ -158,7 +168,18 @@ function UserForm({ user, me, roles, users, onClose, onCreated }: { user: User |
         <TextField label="Téléphone" value={phone} onChange={setPhone} type="tel" inputMode="tel" />
         <TextField label="E-mail (facultatif)" value={email} onChange={setEmail} type="email" autoCapitalize="none" />
         {user && !isSelf && !isSuper && <Toggle checked={active} onChange={setActive} label="Compte actif (décochez pour bloquer l'accès)" />}
-        {!user && <div className="notice"><Icon name="key" /><span>Un mot de passe provisoire sera créé et affiché après l'enregistrement.</span></div>}
+        {canSetPwd ? (
+          <div className="card stack" style={{ background: 'var(--surface-2)' }}>
+            <div className="row" style={{ alignItems: 'flex-end' }}>
+              <div style={{ flex: '1 1 200px' }}>
+                <PasswordField label={user ? 'Nouveau mot de passe' : 'Mot de passe'} value={pwd} onChange={setPwd} autoComplete="new-password"
+                  hint={user ? 'Laissez vide pour ne pas le changer.' : 'Proposé automatiquement, vous pouvez le remplacer.'} />
+              </div>
+              <Button variant="ghost" type="button" icon="refresh" onClick={() => setPwd(tempPassword())}>Générer</Button>
+            </div>
+            {!isSelf && (!user || pwd) && <Toggle checked={mustChange} onChange={setMustChange} label="L'utilisateur devra le changer à sa prochaine connexion" />}
+          </div>
+        ) : (!user && <div className="notice"><Icon name="key" /><span>Un mot de passe provisoire sera créé et affiché après l'enregistrement.</span></div>)}
         {error && <div className="notice notice-danger"><Icon name="alert" /><span>{error}</span></div>}
         {user && <p className="small muted">Compte créé {timeAgo(user.createdAt)}.</p>}
       </div>
