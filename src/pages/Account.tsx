@@ -1,15 +1,15 @@
 // Mon compte : mot de passe, question secrète, thème, déconnexion.
 import { useState } from 'react';
-import { checkPasswordStrength, logout, managesOwnPassword, roleOf, SECRET_QUESTIONS, setPassword, setSecretQuestion, audit, useCurrentUser } from '../lib/auth';
+import { hasFullAccess, checkPasswordStrength, logout, managesOwnPassword, roleOf, SECRET_QUESTIONS, setPassword, setSecretQuestion, audit, useCurrentUser } from '../lib/auth';
 import { verifySecret } from '../lib/crypto';
-import { PERMISSIONS, SUPERADMIN_ROLE } from '../lib/permissions';
+import { PERMISSIONS } from '../lib/permissions';
 import { Badge, Button, PageHead, PasswordField, SelectField, TextField, toast } from '../ui/kit';
 import { ThemePicker } from './Settings';
 
 export function AccountPage() {
   const me = useCurrentUser()!;
   const role = roleOf(me);
-  const perms = me.roleId === SUPERADMIN_ROLE ? PERMISSIONS : PERMISSIONS.filter((p) => role?.permissions.includes(p.key));
+  const perms = hasFullAccess(me) ? PERMISSIONS : PERMISSIONS.filter((p) => role?.permissions.includes(p.key));
 
   return (
     <>

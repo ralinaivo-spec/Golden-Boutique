@@ -19,9 +19,9 @@ interface NavItem { path: string; label: string; icon: IconName; perm?: string; 
 
 const NAV: NavItem[] = [
   { path: '/', label: 'Accueil', icon: 'home', group: '', page: () => <DashboardPage />, mobile: true },
-  { path: '/utilisateurs', label: 'Utilisateurs', icon: 'users', perm: 'users.manage', group: 'Administration', page: () => <UsersPage />, mobile: true },
-  { path: '/roles', label: 'Rôles et accès', icon: 'shield', perm: 'users.manage', group: 'Administration', page: () => <RolesPage /> },
-  { path: '/journal', label: "Journal d'activité", icon: 'list', perm: 'audit.view', group: 'Administration', page: () => <AuditPage /> },
+  { path: '/utilisateurs', label: 'Utilisateurs', icon: 'users', perm: 'users.manage', group: 'Équipe et accès', page: () => <UsersPage />, mobile: true },
+  { path: '/roles', label: 'Rôles et accès', icon: 'shield', perm: 'users.manage', group: 'Équipe et accès', page: () => <RolesPage /> },
+  { path: '/journal', label: "Journal d'activité", icon: 'list', perm: 'audit.view', group: 'Équipe et accès', page: () => <AuditPage /> },
   { path: '/parametres', label: 'Paramètres', icon: 'settings', group: 'Réglages', page: () => <SettingsPage />, mobile: true },
   { path: '/compte', label: 'Mon compte', icon: 'user', group: 'hidden', page: () => <AccountPage /> },
 ];

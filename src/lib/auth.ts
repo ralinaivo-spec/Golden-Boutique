@@ -1,7 +1,7 @@
 // Comptes, connexion, mots de passe, questions secrètes et journal d'activité.
 import { all, applyRemote, get, getMeta, save, setMeta, useMeta, useTable, type BaseRecord } from './db';
 import { hashSecret, normalizeAnswer, verifySecret } from './crypto';
-import { DEFAULT_ROLES, PERMISSIONS, SUPERADMIN_ROLE } from './permissions';
+import { ADMIN_ROLE, DEFAULT_ROLES, PERMISSIONS, SUPERADMIN_ROLE } from './permissions';
 
 export interface User extends BaseRecord {
   username: string;
@@ -22,6 +22,8 @@ export interface Role extends BaseRecord {
   permsCatalog?: string[];
   locked?: boolean;
   system?: boolean;
+  /** Accès total au logiciel (tous les droits, y compris ceux ajoutés plus tard). Seul le super-admin l'accorde. */
+  fullAccess?: boolean;
 }
 
 export const SUPERADMIN_ID = 'user-superadmin';
@@ -85,14 +87,21 @@ export function useCurrentUser(): User | undefined {
 export function roleOf(user?: User): Role | undefined {
   return user ? get<Role>('roles', user.roleId) : undefined;
 }
-/** Seuls le super-admin et le gérant gèrent leur propre mot de passe ; les autres reçoivent le leur du gérant. */
+/** Le rôle de cet utilisateur a-t-il un accès total (super-admin, ou rôle auquel le super-admin l'a donné) ? */
+export function hasFullAccess(user?: User): boolean {
+  if (!user) return false;
+  return user.roleId === SUPERADMIN_ROLE || !!roleOf(user)?.fullAccess;
+}
+export const isSuperAdmin = (user?: User) => !!user && user.roleId === SUPERADMIN_ROLE;
+
+/** Seuls le super-admin, le gérant et les accès totaux gèrent leur propre mot de passe ; les autres reçoivent le leur du gérant. */
 export function managesOwnPassword(user?: User): boolean {
-  return !!user && (user.roleId === SUPERADMIN_ROLE || user.roleId === 'role-admin');
+  return !!user && (user.roleId === ADMIN_ROLE || hasFullAccess(user));
 }
 
 export function can(user: User | undefined, perm: string): boolean {
   if (!user) return false;
-  if (user.roleId === SUPERADMIN_ROLE) return true;
+  if (hasFullAccess(user)) return true;
   return !!roleOf(user)?.permissions.includes(perm);
 }
 export function useCan() {

@@ -1,6 +1,6 @@
 // Gestion des utilisateurs : seul l'admin crée les comptes et attribue les rôles.
 import { useMemo, useState } from 'react';
-import { audit, normUsername, roleOf, setPassword, SUPERADMIN_ID, useCurrentUser, type Role, type User } from '../lib/auth';
+import { audit, hasFullAccess, normUsername, roleOf, setPassword, SUPERADMIN_ID, useCurrentUser, type Role, type User } from '../lib/auth';
 import { hashSecret } from '../lib/crypto';
 import { save, useTable } from '../lib/db';
 import { ADMIN_ROLE, SUPERADMIN_ROLE } from '../lib/permissions';
@@ -32,7 +32,9 @@ export function UsersPage() {
       .sort((a, b) => Number(b.active) - Number(a.active) || a.fullName.localeCompare(b.fullName));
   }, [users, q, roleFilter]);
 
-  const canTouch = (u: User) => u.roleId !== SUPERADMIN_ROLE || me.roleId === SUPERADMIN_ROLE;
+  // Le super-admin touche à tout ; un compte à accès total touche à tout sauf au super-admin ;
+  // les autres gestionnaires ne touchent pas aux comptes à accès total (sauf le leur).
+  const canTouch = (u: User) => me.roleId === SUPERADMIN_ROLE || (u.roleId !== SUPERADMIN_ROLE && (hasFullAccess(me) || !hasFullAccess(u) || u.id === me.id));
 
   return (
     <>
@@ -61,6 +63,7 @@ export function UsersPage() {
                     <span className="list-item-title">{u.fullName}</span>
                     {u.id === me.id && <Badge tone="brand">Vous</Badge>}
                     {!u.active && <Badge tone="danger">Désactivé</Badge>}
+                    {hasFullAccess(u) && <Badge tone="ok">Accès total</Badge>}
                     {u.mustChangePassword && u.active && u.roleId === SUPERADMIN_ROLE && <Badge tone="warn">Mot de passe d'origine</Badge>}
                   </div>
                   <p className="small muted">{u.username} · {roleOf(u)?.name ?? 'Rôle inconnu'}{u.phone ? ` · ${u.phone}` : ''}</p>
@@ -117,16 +120,17 @@ function UserForm({ user, me, roles, users, onClose, onCreated }: { user: User |
   const [email, setEmail] = useState(user?.email ?? '');
   const [active, setActive] = useState(user?.active ?? true);
   // Mot de passe : visible et modifiable uniquement par le super-admin et le gérant.
-  const canSetPwd = me.roleId === SUPERADMIN_ROLE || me.roleId === ADMIN_ROLE;
+  const canSetPwd = me.roleId === ADMIN_ROLE || hasFullAccess(me);
   const [pwd, setPwd] = useState(user ? '' : tempPassword());
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const isSelf = user?.id === me.id;
   const isSuper = user?.id === SUPERADMIN_ID;
-  // Seul le super-admin peut donner le rôle super-admin.
+  // Seul le super-admin peut donner le rôle super-admin ; seuls les comptes à accès total peuvent donner un rôle à accès total.
   const roleOptions = roles
     .filter((r) => r.id !== SUPERADMIN_ROLE || me.roleId === SUPERADMIN_ROLE)
-    .map((r) => ({ value: r.id, label: r.name }));
+    .filter((r) => !r.fullAccess || hasFullAccess(me) || r.id === user?.roleId)
+    .map((r) => ({ value: r.id, label: r.name + (r.fullAccess || r.id === SUPERADMIN_ROLE ? ' (accès total)' : '') }));
 
   async function submit() {
     setError(null);

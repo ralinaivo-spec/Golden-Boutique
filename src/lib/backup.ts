@@ -2,7 +2,7 @@
 import { DEFAULT_ROLES, PERMISSIONS } from './permissions';
 import { all, dumpAll, getMeta, restoreAll, save, setMeta, TABLES, type BaseRecord } from './db';
 import { decryptText, encryptText, hashSecret } from './crypto';
-import { audit, currentUser, SUPERADMIN_ID, type User } from './auth';
+import { audit, currentUser, hasFullAccess, SUPERADMIN_ID, type User } from './auth';
 import { getCloud, syncNow } from './sync';
 
 export interface BackupFile {
@@ -111,7 +111,7 @@ export async function fetchCloudBackup(id: string): Promise<Record<string, BaseR
 export async function autoCloudBackup() {
   const u = currentUser();
   if (!u || !getCloud() || !navigator.onLine) return;
-  if (!['role-admin', 'role-superadmin'].includes(u.roleId)) return;
+  if (u.roleId !== 'role-admin' && !hasFullAccess(u)) return;
   const last = getMeta<string | null>('lastCloudBackup', null);
   if (last && Date.now() - new Date(last).getTime() < 24 * 3600 * 1000) return;
   try { await cloudBackup('Automatique quotidienne'); } catch { /* réessaiera plus tard */ }
@@ -127,7 +127,7 @@ export async function factoryReset() {
     const rows = all(t).filter((r) => !(t === 'users' && r.id === SUPERADMIN_ID) && !(t === 'roles' && roleIds.has(r.id)));
     if (rows.length) await save(t, rows.map((r) => ({ id: r.id, deleted: true, updatedAt: now })));
   }
-  await save('roles', DEFAULT_ROLES.map((r) => ({ ...r, permsCatalog: PERMISSIONS.map((p) => p.key), deleted: false })));
+  await save('roles', DEFAULT_ROLES.map((r) => ({ ...r, fullAccess: !!r.fullAccess, permsCatalog: PERMISSIONS.map((p) => p.key), deleted: false })));
   await save('users', {
     id: SUPERADMIN_ID, username: 'super-adm', fullName: 'Super-admin', roleId: 'role-superadmin', active: true,
     passwordHash: await hashSecret('anosy'), mustChangePassword: true, secretQuestion: undefined, secretAnswerHash: undefined, email: undefined, deleted: false,
