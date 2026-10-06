@@ -268,7 +268,7 @@ Un résumé court, envoyé en un clic (WhatsApp, Messenger, SMS, e-mail ou PDF) 
 | Application | React + TypeScript, PWA | Un seul code pour tous les appareils, installable, hors ligne |
 | Base locale | IndexedDB (Dexie) | Données sur l'appareil, fonctionne sans réseau |
 | Cloud | **Supabase** (PostgreSQL + authentification + e-mails) | Offre gratuite suffisante pour démarrer, sauvegardes, envoi d'e-mails de réinitialisation |
-| Hébergement de l'appli | GitHub Pages (gratuit), déployé automatiquement depuis le dépôt `golden-boutique` | Chaque mise à jour du code est en ligne en quelques minutes |
+| Hébergement de l'appli | GitHub Pages (gratuit), déployé automatiquement depuis le dépôt `Golden-Boutique` | Chaque mise à jour du code est en ligne en quelques minutes |
 | Impression | Impression navigateur au format ticket (tous appareils) + Bluetooth direct sur Android/PC | iPhone ne permet pas le Bluetooth direct depuis une appli web |
 
 ---

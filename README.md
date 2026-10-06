@@ -2,7 +2,7 @@
 
 Logiciel de gestion commerciale : achats (Chine), stock, ventes en ligne et en boutique, livraisons, trésorerie et rapports — utilisable en ligne et hors ligne, sur téléphone et ordinateur (application web installable).
 
-- **Application en ligne : https://ralinaivo-spec.github.io/golden-boutique/**
+- **Application en ligne : https://ralinaivo-spec.github.io/Golden-Boutique/**
 - Cahier des charges : [docs/CAHIER_DES_CHARGES.md](docs/CAHIER_DES_CHARGES.md)
 - Relier au cloud : [docs/GUIDE_CLOUD.md](docs/GUIDE_CLOUD.md)
 
