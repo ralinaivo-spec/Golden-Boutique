@@ -1,40 +1,19 @@
-# TSENA
+# Golden Boutique
 
-Logiciel de gestion commerciale : achats (Chine), stock, ventes en ligne et en boutique, livraisons, trésorerie et rapports — utilisable en ligne et hors ligne, sur téléphone et ordinateur (application web installable).
+Logiciel de gestion : achats en Chine, arrivages, stock, ventes à Madagascar, fournisseurs et douane, finances et tâches de l'équipe. Tout le logiciel tient dans un seul fichier : `index.html`.
 
-- **Application en ligne : https://ralinaivo-spec.github.io/Golden-Boutique/**
-- Cahier des charges : [docs/CAHIER_DES_CHARGES.md](docs/CAHIER_DES_CHARGES.md)
-- Relier au cloud : [docs/GUIDE_CLOUD.md](docs/GUIDE_CLOUD.md)
-
-## Avancement
-
-| Étape | Contenu | État |
-|---|---|---|
-| 0 | Cahier des charges | ✅ validé |
-| 1 | Application installable, connexion, rôles, utilisateurs, thème, logo, hors ligne, synchronisation, sauvegardes | ✅ |
-| 2 | Catégories, articles, variantes, stock, modèles Excel et import | à venir |
-| 3 | Achats Chine, expéditions, coût de revient, réception | à venir |
-| 4 | Clients, commandes, préparation, livraisons, retours, échanges | à venir |
-| 5 | Caisse boutique, paiements, tickets 58 mm | à venir |
-| 6 | Trésorerie, dépenses, comptes livreurs, clôture, récapitulatif | à venir |
-| 7 | Tableaux de bord, rapports, bénéfice / perte | à venir |
-| 8 | Sauvegardes avancées, réinitialisation par e-mail, outils | à venir |
+- **En ligne** (une fois GitHub Pages activé) : https://ralinaivo-spec.github.io/Golden-Boutique/
+- **Sur un ordinateur** : téléchargez `index.html` et ouvrez-le dans le navigateur.
 
 ## Équipe et accès
 
-Le menu **Équipe et accès** regroupe les utilisateurs, les rôles et le journal d'activité.
+Le menu **Équipe et accès** contient **Employés** et **Rôles et permissions**.
 
-- **Rôles prêts à l'emploi** : Admin / Gérant, Propriétaire, Vendeur, Magasinier, Caissier(ère), Vendeur en ligne, Préparateur(trice), Livreur, Responsable des achats, Comptable. Chaque rôle peut être renommé, et ses droits cochés ou décochés un par un (bouton « Voir et modifier les droits » ou grand tableau). On peut aussi créer d'autres rôles.
-- **Accès total** : le super-admin peut, d'un interrupteur, donner (ou retirer) un accès complet au logiciel à un rôle — par exemple Admin / Gérant ou Propriétaire — y compris restauration et réinitialisation.
-- Seul le super-admin (ou un compte à accès total) peut attribuer un rôle à accès total à un utilisateur.
+- **Rôles par poste**, tous modifiables : Administrateur, Propriétaire, Gérant(e) de boutique, Responsable des achats, Agent de recherche de produits, Responsable des fournisseurs, Responsable logistique, Comptable, Vendeur, Vendeur en ligne, Caissier(ère), Magasinier, Livreur. Chaque rôle peut être renommé, supprimé ou réglé rubrique par rubrique (Aucun accès / Voir / Modifier), dans la matrice ou avec le bouton **Permissions**. On peut aussi créer de nouveaux rôles.
+- **Accès total** : le super-administrateur peut, d'une case à cocher sur la fiche d'un rôle (par exemple **Propriétaire**), lui donner un accès complet au logiciel (toutes les rubriques, les employés, les rôles et les permissions), et le retirer à tout moment.
+- Seul le super-administrateur peut attribuer un rôle à accès total à un employé. Un compte à accès total ne peut pas modifier le super-administrateur.
+- Pour une personne en particulier, des accès peuvent être ajoutés ou retirés en plus de ceux de son rôle (Employés › Modifier).
 
-## Première connexion
+## Sauvegarde
 
-Identifiant `super-adm`, mot de passe d'origine fourni séparément — il doit être changé dès la première connexion.
-
-## Technique
-
-- React 19 + TypeScript, construit avec esbuild (`npm run build` → `dist/`), aucune autre dépendance.
-- Données locales dans IndexedDB (`src/lib/db.ts`), file d'envoi et synchronisation « dernière modification gagnante » avec Supabase (`src/lib/sync.ts`, `supabase/schema.sql`).
-- Service worker maison (`src/sw.js`) pour le fonctionnement hors ligne.
-- Hébergement : GitHub Pages (`.github/workflows/deploy.yml`), Netlify (`netlify.toml`) ou Vercel (`vercel.json`).
+Les données restent dans le navigateur de chaque appareil. Faites régulièrement une sauvegarde depuis **Paramètres** (fichier `.json`) et gardez-la en lieu sûr.
