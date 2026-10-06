@@ -1,0 +1,39 @@
+GOLDEN BOUTIQUE — SERVEUR DE LA BOUTIQUE (Mac)
+================================================
+
+Ce dossier fait tourner Golden Boutique sur votre Mac pour que tous les
+appareils (téléphones, tablettes, autres ordinateurs) partagent les mêmes
+comptes et les mêmes données.
+
+DÉMARRER (chaque matin)
+1. Double-cliquez sur « Demarrer-Boutique.command ».
+   La toute première fois, le Mac peut refuser (« développeur non vérifié ») :
+   faites un CLIC DROIT sur le fichier › Ouvrir › Ouvrir.
+   S'il demande « Autoriser les connexions entrantes ? », cliquez sur Autoriser.
+2. La première fois, le serveur se télécharge tout seul (12 Mo, Internet requis).
+3. Chrome s'ouvre sur http://localhost:8090 : c'est le logiciel de la boutique.
+4. LAISSEZ LA FENÊTRE NOIRE OUVERTE. Si vous la fermez, le serveur s'arrête.
+   Le Mac ne se met pas en veille tant qu'elle est ouverte.
+
+PREMIÈRE CONNEXION SUR UN SERVEUR NEUF
+   Identifiant : super-adm      Mot de passe : Ampandrana
+   Le logiciel vous demandera aussitôt un nouveau mot de passe.
+
+TÉLÉPHONES DES EMPLOYÉS
+   Dans le logiciel : Paramètres › Réseau › lien d'accès (avec QR code).
+   Le téléphone doit être sur le MÊME Wi-Fi que le Mac.
+   Ouvrir le lien dans Chrome ou Safari, pas dans l'aperçu WhatsApp.
+
+ACCÈS DEPUIS L'EXTÉRIEUR (4G) — facultatif
+   Installez une fois l'outil gratuit cloudflared (Terminal : brew install cloudflared),
+   puis relancez Demarrer-Boutique : un lien https s'affichera.
+   Attention : ce lien ouvre le logiciel à Internet. Ne le partagez qu'avec l'équipe.
+   Il change à chaque démarrage.
+
+NE PAS SUPPRIMER
+   Le dossier « pb_data » : il contient TOUTES les données de la boutique.
+   Faites aussi des sauvegardes depuis Paramètres › Sauvegarde.
+
+METTRE À JOUR LE LOGICIEL
+   Remplacez seulement le fichier « pb_public/index.html » par la nouvelle version,
+   puis rechargez la page. Les données ne sont pas touchées.
