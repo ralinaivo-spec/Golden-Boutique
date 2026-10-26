@@ -1,0 +1,7 @@
+name = "golden-boutique-sauvegardes"
+main = "worker.js"
+compatibility_date = "2026-01-01"
+
+[[kv_namespaces]]
+binding = "SAUVEGARDES"
+id = "b9fc260114334c7393442a3e543fcc56"

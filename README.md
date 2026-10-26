@@ -31,3 +31,22 @@ Le kit `serveur/` (Mac + PocketBase, même Wi-Fi) reste disponible comme autre s
 ## Sauvegarde
 
 Les données restent dans le navigateur de chaque appareil. Faites régulièrement une sauvegarde depuis **Paramètres** (fichier `.json`) et gardez-la en lieu sûr.
+
+## Mise à jour d'octobre 2026
+
+- **Hors connexion** : chaque modification est d'abord gardée sur l'appareil (même si la page est fermée), puis envoyée et fusionnée automatiquement dès le retour d'Internet. Le logiciel s'ouvre aussi sans Internet à partir de la dernière copie.
+- **Coupure de courant** : si la page n'a pas été fermée normalement, la session est fermée et le mot de passe est redemandé.
+- **Produits et stock** : onglets Stock reçu, Quantités vendues, Reste en stock (par catégorie), vue Tableau à en-tête figé, marques, prix revendeur.
+- **Arrivages** : tout est modifiable, frais de transitaire saisis à la main, colis regroupés par commande et par catégorie.
+- **Ventes** : Réservations (avance, reste à payer, clôture en vente), Caisse réelle, paiement espèces / mobile money.
+- **Finances** : Dépenses par mois et par année, facture mensuelle des dépenses, Valeur et perte, et Achats en Chine (Recherche, Nouvelle commande, Commandes, Suivi des colis).
+- **Rôle Revendeur** : catalogue en lecture seule avec prix de gros et prix revendeur.
+
+## Sauvegarde Cloudflare
+
+Le dossier `cloudflare/` contient un petit service qui garde une copie de toutes les données (la plus récente, plus une par jour pendant 60 jours) dans l'espace KV `golden-boutique-sauvegardes` de votre compte Cloudflare.
+
+1. Sur Cloudflare : *My Profile › API Tokens › Create Token › Edit Cloudflare Workers*. Notez aussi votre *Account ID* (page d'accueil du compte).
+2. Sur GitHub, dans ce dépôt : *Settings › Secrets and variables › Actions*, créez `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` et `BACKUP_KEY` (un mot de passe de votre choix).
+3. *Actions › Sauvegarde Cloudflare › Run workflow*. L'adresse du service (…workers.dev) s'affiche dans le journal.
+4. Dans le logiciel : *Paramètres › Sauvegarde › Sauvegarde Cloudflare*, saisissez l'adresse et la clé, puis « Enregistrer et tester ».

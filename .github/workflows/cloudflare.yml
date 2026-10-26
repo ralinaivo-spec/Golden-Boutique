@@ -1,0 +1,25 @@
+# Met en ligne le service de sauvegarde Cloudflare (dossier cloudflare/) à chaque modification.
+# Secrets à créer une fois dans GitHub (Settings › Secrets and variables › Actions) :
+#   CLOUDFLARE_API_TOKEN  : jeton Cloudflare « Edit Cloudflare Workers »
+#   CLOUDFLARE_ACCOUNT_ID : identifiant du compte Cloudflare
+#   BACKUP_KEY            : mot de passe de la sauvegarde (le même que dans Paramètres › Sauvegarde)
+name: Sauvegarde Cloudflare
+on:
+  push:
+    branches: [main]
+    paths: ['cloudflare/**', '.github/workflows/cloudflare.yml']
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: cloudflare
+          secrets: |
+            BACKUP_KEY
+        env:
+          BACKUP_KEY: ${{ secrets.BACKUP_KEY }}
