@@ -501,9 +501,11 @@ const TOT=id=>id=='admin'||!!(ROLES.find(r=>r.id==id)||{}).tot;
 const isRev=u=>!!u&&!PV&&!TOT(u.role)&&!!(ROLES.find(r=>r.id==u.role)||{}).rv||(!!PV&&!!(ROLES.find(r=>r.id==PV)||{}).rv),REV=()=>isRev(cur());
 const rchip=id=>{const r=RO(id);return`<span class=bd><i class=d style="background:${r.c};margin:0"></i>${esc(r.n)}</span>`};
 // Coupure de courant ou arrêt brutal : si la page était ouverte et n'a pas été fermée normalement, la session est fermée
-let CUT=0;try{const al=+localStorage.getItem('gb_alive')||0;if(al&&localStorage.getItem('gb_clean')==='0'&&Date.now()-al>90e3){CUT=1;sessionStorage.removeItem('bi_s');localStorage.removeItem('gb_keep')}}catch(e){}
-const alive=()=>{try{if(me&&!document.hidden){localStorage.setItem('gb_alive',String(Date.now()));localStorage.setItem('gb_clean','0')}else localStorage.setItem('gb_clean','1')}catch(e){}};
-setInterval(alive,20e3);document.addEventListener('visibilitychange',alive);addEventListener('pagehide',()=>{try{localStorage.setItem('gb_clean','1')}catch(e){}});
+// Onglet fermé sans se déconnecter, coupure de courant ou de connexion : si aucune page du logiciel n'a été ouverte
+// depuis plus de 3 minutes sur cet appareil, la session est fermée (un simple rechargement de la page garde la session).
+let CUT=0;try{const al=+localStorage.getItem('gb_alive')||0;if(al&&Date.now()-al>180e3){CUT=localStorage.getItem('gb_clean')==='0'?1:2;sessionStorage.removeItem('bi_s');localStorage.removeItem('gb_keep')}}catch(e){}
+const alive=()=>{try{if(me){localStorage.setItem('gb_alive',String(Date.now()));localStorage.setItem('gb_clean',document.hidden?'1':'0')}}catch(e){}};
+setInterval(alive,20e3);document.addEventListener('visibilitychange',alive);addEventListener('pagehide',()=>{try{if(me)localStorage.setItem('gb_alive',String(Date.now()));localStorage.setItem('gb_clean','1')}catch(e){}});
 let US=lsg('bi_u2',null),me=null,PV=null,RS={},nm='',sc='';try{me=sessionStorage.getItem('bi_s')}catch(e){}if(!me)try{me=localStorage.getItem('gb_keep')||null}catch(e){}
 const cur=()=>US&&US.find(x=>x.u==me),svU=()=>ssv('bi_u2',US);
 const isAdm=u=>!!u&&TOT(u.role)&&!PV;
@@ -1342,9 +1344,9 @@ const findU=n=>{n=(n||'').trim().replace(/[\u2010-\u2015]/g,'-').toLowerCase();i
 const KEEP='gb_keep',keepGet=()=>{try{return localStorage.getItem(KEEP)}catch(e){return null}},keepSet=u=>{try{u?localStorage.setItem(KEEP,u):localStorage.removeItem(KEEP)}catch(e){}};
 let LF={n:0,t:0};
 const pwEye=id=>`<button type=button class="g pwe" aria-label="Afficher le mot de passe" title="Afficher ou masquer" onclick="const i=$('#${id}');i.type=i.type=='password'?'text':'password';this.classList.toggle('on')">${ic('eye',17)}</button>`;
-function login(m=''){if(CUT&&!m){m='Par sécurité, la session a été fermée après une coupure (courant ou connexion). Reconnectez-vous : vos données sont conservées.';CUT=0}const loc=BI.mode!='server',url=biNetUrl(),pub=BI.net&&BI.net.pub;
+function login(m=''){if(CUT&&!m){m=CUT==1?'Par sécurité, la session a été fermée après une coupure (courant ou connexion). Reconnectez-vous : vos données sont conservées.':'Par sécurité, la session a été fermée car le logiciel était fermé sans déconnexion. Reconnectez-vous : vos données sont conservées.';CUT=0}const loc=BI.mode!='server',url=biNetUrl(),pub=BI.net&&BI.net.pub;
 X(`<h1 style="font-size:1.5em">Connexion</h1><p class=mut style="margin:4px 0 6px">Utilisez vos identifiants <b>Golden Boutique</b>, fournis par l’administrateur. Votre compte Google ou Gmail n’est pas utilisé ici.</p>${col(fld('Nom d’utilisateur ou adresse e-mail','lu','text','autocomplete=username inputmode=email autocapitalize=off autocorrect=off spellcheck=false onkeydown="if(event.key==\'Enter\'){event.preventDefault();$(\'#lp\').focus()}"')+`<label>Mot de passe<span class=pww><input id=lp type=password autocomplete=current-password autocapitalize=off autocorrect=off spellcheck=false onkeydown="if(event.key=='Enter'){event.preventDefault();doLogin()}">${pwEye('lp')}</span></label>`)}
-<label class=ck style="margin:10px 0 2px"><input type=checkbox id=lk ${keepGet()!==''?'checked':''}> Rester connecté sur cet appareil</label>
+<label class=ck style="margin:10px 0 2px"><input type=checkbox id=lk ${keepGet()!==''?'checked':''}> Garder la session pour les autres onglets (fermée automatiquement 3 min après la fermeture du logiciel)</label>
 <p class=msg id=ms role=alert>${m}</p>${B('Se connecter','doLogin()')}${lk('Mot de passe oublié ?','forgot()')}
 ${loc?`<div class=note style="margin-top:14px;font-size:.88em">${/\.github\.io$/.test(location.hostname)?'<b>Lien incomplet :</b> pour accéder aux comptes et aux données de la boutique, ouvrez le <b>lien d’invitation</b> envoyé par l’administrateur (WhatsApp ou e-mail), en entier.':'<b>Mode local :</b> ce navigateur garde ses propres données et ses propres comptes. Pour utiliser les comptes et les données de la boutique, ouvrez le <b>lien d’invitation</b> envoyé par l’administrateur.'}<div style="margin-top:8px"><a onclick="ghSetup()">Administrateur : relier aux données GitHub</a></div></div>`:''}
 ${!loc&&/^(localhost|127\.)/.test(location.hostname)&&(url||pub)?`<p class=mut style="margin-top:14px;font-size:.88em">Lien pour les autres appareils : ${url?`<b>${esc(url)}</b> (même Wi-Fi)`:''}${pub?`<br>Depuis Internet : <b>${esc(pub)}</b>`:''}</p>`:''}
